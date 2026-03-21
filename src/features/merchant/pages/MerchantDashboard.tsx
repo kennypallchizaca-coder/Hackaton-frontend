@@ -12,45 +12,64 @@ import { TradingChart } from '../../trading/components/TradingChart';
 import { TradePanel } from '../../trading/components/TradePanel';
 import { TransactionTable } from '../../shared/components/TransactionTable';
 import { SystemFlowMap } from '../../shared/components/SystemFlowMap';
+import { walletsService, type Wallet } from '../../wallets/api/walletsService';
+import { BalanceCard } from '../../consumer/components/BalanceCard';
 import { cn } from '../../../utils/cn';
+
 export function MerchantDashboard() {
   const user = useAuthStore(state => state.user);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [activeTab, setActiveTab] = useState('trades');
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMerchantData = async () => {
-      if (!user) return;
+  const fetchData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const [txs, wls] = await Promise.all([
+        transactionService.getAll(),
+        walletsService.getMyWallets()
+      ]);
       
-      try {
-        const txs = await transactionService.getAll();
-        
-        // Filter transactions where merchant is sender or receiver
-        const filteredTxs = txs.filter(tx => 
-          tx.receiverId === user.id || 
-          tx.senderId === user.id || 
-          tx.receiverRole === 'merchant'
-        );
-        
-        setTransactions(filteredTxs);
-      } catch (error) {
-        console.error('Error fetching merchant data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      const filteredTxs = txs.filter(tx => 
+        tx.receiverId === user.id || 
+        tx.senderId === user.id || 
+        tx.receiverRole === 'merchant'
+      );
+      
+      setTransactions(filteredTxs);
+      setWallets(wls);
+    } catch (error) {
+      console.error('Error fetching merchant data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchMerchantData();
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('storage', fetchData);
+    return () => window.removeEventListener('storage', fetchData);
   }, [user]);
 
+  const handleAddFakeFunds = async () => {
+    await walletsService.addMockFunds('USD', 2000);
+    await walletsService.addMockFunds('BTC', 0.2);
+    fetchData();
+  };
+
+  const fiatBalance = wallets.find(w => w.currency === 'USD' || w.currency === 'FIAT')?.balance || '0';
+  const cryptoBalance = wallets.find(w => w.currency === 'BTC' || w.currency === 'CRYPTO')?.balance || '0';
+
   const tabs = [
+    { id: 'dashboard', label: 'Vista General' },
     { id: 'trades', label: 'Historial de Transacciones' },
     { id: 'protocol', label: 'Protocolo de Enrutamiento' },
   ];
 
   return (
-    <div className="h-full flex flex-col bg-slate-900 overflow-hidden">
+    <div className="h-full flex flex-col bg-slate-900 overflow-hidden select-none font-sans">
       <SEO title="Panel de Local / Comercio | KuriPay" />
       
       <TradingTerminalLayout
@@ -77,17 +96,49 @@ export function MerchantDashboard() {
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-900">
-              {activeTab === 'protocol' ? (
-                <div className="p-4">
+            <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-950">
+              {activeTab === 'dashboard' && (
+                <div className="p-6 space-y-6">
+                  <BalanceCard 
+                    title="Liquidez del Comercio"
+                    fiatAmount={parseFloat(fiatBalance)} 
+                    cryptoAmount={parseFloat(cryptoBalance)} 
+                    onAddFunds={handleAddFakeFunds}
+                  />
+                  
+                  <div className="bg-slate-800 border border-slate-700 rounded-sm p-5">
+                    <h4 className="text-blue-500 text-[11px] font-black uppercase tracking-widest mb-4">Estado del Terminal</h4>
+                    <div className="space-y-3">
+                       <div className="flex justify-between border-b border-slate-700 pb-2">
+                          <span className="text-slate-400 text-[10px] uppercase font-bold">POS ID</span>
+                          <span className="text-slate-50 text-[11px] font-mono">{user?.id?.slice(0, 12).toUpperCase()}</span>
+                       </div>
+                       <div className="flex justify-between">
+                          <span className="text-slate-400 text-[10px] uppercase font-bold">Canal de Pago</span>
+                          <span className="text-emerald-500 text-[11px] font-black uppercase">Activo (L1)</span>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'trades' && (
+                <div className="bg-slate-900">
+                  {isLoading ? (
+                    <div className="p-12 text-center text-slate-400 text-[11px] font-black uppercase tracking-widest animate-pulse">
+                      Sincronizando Datos...
+                    </div>
+                  ) : (
+                    <TransactionTable transactions={transactions} hideHeader />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'protocol' && (
+                <div className="p-6">
+                   <h3 className="font-black text-slate-50 text-[12px] uppercase tracking-widest mb-6">Visualización del Ecosistema</h3>
                    <SystemFlowMap />
                 </div>
-              ) : isLoading ? (
-                <div className="p-12 text-center text-slate-400 text-[11px] font-black uppercase tracking-widest animate-pulse">
-                  Sincronizando Datos del Libro Mayor...
-                </div>
-              ) : (
-                <TransactionTable transactions={transactions} hideHeader />
               )}
             </div>
           </div>

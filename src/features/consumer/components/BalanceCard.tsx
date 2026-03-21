@@ -5,15 +5,29 @@ interface BalanceCardProps {
   title: string;
   fiatAmount: number;
   cryptoAmount: number;
+  onAddFunds?: () => void;
 }
 
-export function BalanceCard({ title, fiatAmount, cryptoAmount }: BalanceCardProps) {
+import { Plus } from '../../../components/common/Icons';
+
+export function BalanceCard({ title, fiatAmount, cryptoAmount, onAddFunds }: BalanceCardProps) {
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-sm p-6 shadow-xl relative overflow-hidden font-sans tabular-nums">
+    <div className="bg-slate-800 border border-slate-700 rounded-sm p-6 shadow-xl relative overflow-hidden font-sans tabular-nums group">
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
-        <h3 className="text-slate-400 text-[10px] uppercase font-black tracking-widest mb-4">{title}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-slate-400 text-[10px] uppercase font-black tracking-widest">{title}</h3>
+          {onAddFunds && (
+            <button 
+              onClick={onAddFunds}
+              title="Añadir fondos de prueba"
+              className="p-1.5 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+            >
+              <Plus size={14} />
+            </button>
+          )}
+        </div>
 
         <div className="space-y-4">
           <div>

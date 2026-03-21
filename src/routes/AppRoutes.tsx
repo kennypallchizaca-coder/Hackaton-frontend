@@ -27,9 +27,30 @@ export function AppRoutes() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="transactions" element={<Transactions />} />
-          <Route path="compliance" element={<Compliance />} />
+          <Route 
+            path="payments" 
+            element={
+              <ProtectedRoute allowedRoles={['merchant', 'admin']}>
+                <Payments />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="transactions" 
+            element={
+              <ProtectedRoute allowedRoles={['consumer', 'merchant', 'transaccionador', 'admin']}>
+                <Transactions />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="compliance" 
+            element={
+              <ProtectedRoute allowedRoles={['transaccionador', 'admin']}>
+                <Compliance />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>

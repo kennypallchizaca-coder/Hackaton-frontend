@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Copy, RefreshCw, CheckCircle2, Clock, XCircle, Zap } from '../common/Icons';
+import { paymentService } from '../../features/payments/api/paymentService';
 import { type Invoice, type PaymentStatus } from '../../types';
 import { cn } from '../../utils/cn';
 
@@ -113,35 +114,13 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
           </div>
         )}
 
-        {/* MOCK QR SVG */}
-        <div className="relative">
-          <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" className="rounded-lg">
-            <rect width="240" height="240" fill="white"/>
-            {/* Finders */}
-            <rect x="10" y="10" width="60" height="60" rx="4" fill="#020617"/>
-            <rect x="16" y="16" width="48" height="48" rx="2" fill="white"/>
-            <rect x="22" y="22" width="36" height="36" rx="1" fill="#020617"/>
-            
-            <rect x="170" y="10" width="60" height="60" rx="4" fill="#020617"/>
-            <rect x="176" y="16" width="48" height="48" rx="2" fill="white"/>
-            <rect x="182" y="22" width="36" height="36" rx="1" fill="#020617"/>
-            
-            <rect x="10" y="170" width="60" height="60" rx="4" fill="#020617"/>
-            <rect x="16" y="176" width="48" height="48" rx="2" fill="white"/>
-            <rect x="22" y="182" width="36" height="36" rx="1" fill="#020617"/>
-            
-            {/* Random pixels */}
-            {[80,90,100,110,120,130,140,150,160].map((x) =>
-              [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220].map((y) => {
-                const seed = (x * 17 + y * 9 + currentAmountSats) % 4;
-                return seed === 0 ? <rect key={`${x}${y}`} x={x} y={y} width="8" height="8" rx="1" fill="#020617"/> : null;
-              })
-            )}
-            
-            {/* Center Logo */}
-            <circle cx="120" cy="120" r="22" fill="#3b82f6" stroke="white" strokeWidth="4"/>
-            <path d="M128 110 L114 124 L122 124 L112 134 L122 118 L116 118 Z" fill="#020617" transform="scale(1.2) translate(-20, -20)"/>
-          </svg>
+        {/* REAL QR GENERATION VIA API */}
+        <div className="relative bg-white p-4 rounded-2xl shadow-inner border-4 border-binance-black">
+          <img 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(invoice.lightningInvoice || '')}&bgcolor=ffffff&color=020617&margin=1`}
+            alt="Payment QR Code" 
+            className="w-[240px] h-[240px] rounded-lg shadow-sm"
+          />
         </div>
       </div>
 
@@ -196,6 +175,15 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
           <RefreshCw size={18} /> NEW QR
         </button>
       </div>
+
+      {status === 'pending' && (
+        <button
+          onClick={() => paymentService.simulatePayment(invoice.id)}
+          className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-slate-950 transition-all font-black text-[10px] uppercase tracking-widest mt-2"
+        >
+          Simular Pago (Testing)
+        </button>
+      )}
     </div>
   );
 }

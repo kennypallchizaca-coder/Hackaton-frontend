@@ -21,25 +21,35 @@ export function ConsumerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [txs, wls] = await Promise.all([
-          transactionService.getAll(),
-          walletsService.getMyWallets()
-        ]);
-        setTransactions(txs.filter(tx => tx.senderId === user?.id || tx.receiverId === user?.id));
-        setWallets(wls);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [txs, wls] = await Promise.all([
+        transactionService.getAll(),
+        walletsService.getMyWallets()
+      ]);
+      setTransactions(txs.filter(tx => tx.senderId === user?.id || tx.receiverId === user?.id));
+      setWallets(wls);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user) fetchData();
+    
+    // Listen for mock updates
+    window.addEventListener('storage', fetchData);
+    return () => window.removeEventListener('storage', fetchData);
   }, [user]);
+
+  const handleAddFakeFunds = async () => {
+    await walletsService.addMockFunds('USD', 1000);
+    await walletsService.addMockFunds('BTC', 0.1);
+    fetchData();
+  };
 
   const fiatBalance = wallets.find(w => w.currency === 'USD' || w.currency === 'FIAT')?.balance || '0';
   const cryptoBalance = wallets.find(w => w.currency === 'BTC' || w.currency === 'CRYPTO')?.balance || '0';
@@ -92,6 +102,7 @@ export function ConsumerDashboard() {
                       title="Liquidez Disponible"
                       fiatAmount={parseFloat(fiatBalance)} 
                       cryptoAmount={parseFloat(cryptoBalance)} 
+                      onAddFunds={handleAddFakeFunds}
                     />
                     
                     <div className="bg-slate-800 border border-slate-700 rounded-sm p-5 flex flex-col justify-center relative overflow-hidden">

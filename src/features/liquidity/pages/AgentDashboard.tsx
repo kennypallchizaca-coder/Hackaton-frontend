@@ -27,29 +27,39 @@ export function AgentDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('node');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [txs, ords, wls, kytAlerts] = await Promise.all([
-          transactionService.getAll(),
-          liquidityService.getOrders(),
-          walletsService.getMyWallets(),
-          complianceService.getAllAlerts()
-        ]);
-        setTransactions(txs.filter(tx => tx.senderId === user?.id || tx.receiverId === user?.id || tx.senderRole === 'transaccionador'));
-        setOrders(ords);
-        setWallets(wls);
-        setAlerts(kytAlerts);
-      } catch (error) {
-        console.error('Error fetching agent data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [txs, ords, wls, kytAlerts] = await Promise.all([
+        transactionService.getAll(),
+        liquidityService.getOrders(),
+        walletsService.getMyWallets(),
+        complianceService.getAllAlerts()
+      ]);
+      setTransactions(txs.filter(tx => tx.senderId === user?.id || tx.receiverId === user?.id || tx.senderRole === 'transaccionador'));
+      setOrders(ords);
+      setWallets(wls);
+      setAlerts(kytAlerts);
+    } catch (error) {
+      console.error('Error fetching agent data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user) fetchData();
+    
+    // Listen for mock updates
+    window.addEventListener('storage', fetchData);
+    return () => window.removeEventListener('storage', fetchData);
   }, [user]);
+
+  const handleAddFakeFunds = async () => {
+    await walletsService.addMockFunds('USD', 5000);
+    await walletsService.addMockFunds('BTC', 0.5);
+    fetchData();
+  };
 
   const cryptoReserve = wallets.find(w => w.currency === 'BTC' || w.currency === 'CRYPTO')?.balance || '0';
   const fiatReserve = wallets.find(w => w.currency === 'USD' || w.currency === 'FIAT')?.balance || '0';
@@ -118,8 +128,12 @@ export function AgentDashboard() {
                   </div>
 
                   <div className="bg-slate-900 border border-slate-800 p-4 rounded-sm flex gap-4">
-                    <Button variant="outline" className="border-slate-700 text-slate-50 hover:bg-slate-700 px-6 py-2 font-black text-[11px] tracking-widest uppercase flex-1">
-                      Deposit Fiat
+                    <Button 
+                      onClick={handleAddFakeFunds}
+                      variant="outline" 
+                      className="border-slate-700 text-slate-50 hover:bg-slate-700 px-6 py-2 font-black text-[11px] tracking-widest uppercase flex-1"
+                    >
+                      Añadir Fondos de Prueba
                     </Button>
                     <Button className="bg-blue-600 text-white hover:bg-blue-500 px-6 py-2 font-black text-[11px] tracking-widest uppercase flex-1">
                       Post Liquidity

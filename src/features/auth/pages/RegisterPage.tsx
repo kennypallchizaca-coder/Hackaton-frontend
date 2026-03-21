@@ -7,21 +7,21 @@ import { useAuthStore } from '../store/authStore';
 export function Register() {
   const navigate = useNavigate();
   const { register, isLoading } = useAuthStore();
-  
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     role: 'CONSUMER'
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     // Simple validation
     if (formData.password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.');
@@ -51,7 +51,7 @@ export function Register() {
       </div>
 
       <div className="container mx-auto px-6 flex flex-col items-center relative z-10 py-12">
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="w-full max-w-[540px] bg-white/5 backdrop-blur-[40px] border border-white/20 rounded-[32px] p-10 shadow-2xl"
@@ -106,11 +106,10 @@ export function Register() {
                     key={r.id}
                     type="button"
                     onClick={() => setFormData({ ...formData, role: r.id })}
-                    className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${
-                      formData.role === r.id 
-                        ? 'bg-blue-500/10 border-blue-500 text-blue-500' 
+                    className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${formData.role === r.id
+                        ? 'bg-blue-500/10 border-blue-500 text-blue-500'
                         : 'bg-white/5 border-white/10 text-white/60 hover:border-white/30'
-                    }`}
+                      }`}
                   >
                     <span className="text-[11px] font-black">{r.label}</span>
                     <span className="text-[9px] leading-tight opacity-70">{r.desc}</span>
@@ -121,7 +120,7 @@ export function Register() {
 
             <AnimatePresence>
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl"
@@ -138,8 +137,8 @@ export function Register() {
             >
               {isLoading ? (
                 <div className="flex items-center gap-3">
-                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                   Creando cuenta...
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Creando cuenta...
                 </div>
               ) : 'Registrarme'}
             </button>
