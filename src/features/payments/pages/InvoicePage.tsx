@@ -15,8 +15,9 @@ export function InvoicePage() {
     const dataParam = searchParams.get('data');
     if (dataParam) {
       try {
-        const decoded = JSON.parse(atob(dataParam));
-        setInvoice(decoded);
+        const decodedString = decodeURIComponent(atob(dataParam));
+        const decodedInvoice = JSON.parse(decodedString);
+        setInvoice(decodedInvoice);
         setLoading(false);
         return;
       } catch (err) {
