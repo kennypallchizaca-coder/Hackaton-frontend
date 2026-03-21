@@ -10,6 +10,7 @@ export function InvoicePage() {
   const [searchParams] = useSearchParams();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string>('');
 
   useEffect(() => {
     const dataParam = searchParams.get('data');
@@ -20,9 +21,12 @@ export function InvoicePage() {
         setInvoice(decodedInvoice);
         setLoading(false);
         return;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Invalid invoice data in URL', err);
+        setErrorMsg('Error descifrando el código QR: ' + err.message);
       }
+    } else {
+      setErrorMsg('No payload found in QR code. Old version scanned?');
     }
 
     if (id) {
@@ -62,6 +66,7 @@ export function InvoicePage() {
           <XCircle size={48} className="mx-auto text-binance-red" />
           <h1 className="text-2xl font-black text-slate-100">Factura no encontrada</h1>
           <p className="text-slate-400 text-sm">El comprobante que buscas no existe o ha expirado.</p>
+          {errorMsg && <p className="text-red-400 text-xs mt-4 bg-red-900/20 p-2 rounded max-w-xs break-words border border-red-500/20">{errorMsg}</p>}
           <Link to="/" className="inline-block mt-4 px-6 py-2 bg-brand-yellow text-slate-950 font-black rounded-lg hover:bg-brand-yellow/90">
             Volver al Inicio
           </Link>
