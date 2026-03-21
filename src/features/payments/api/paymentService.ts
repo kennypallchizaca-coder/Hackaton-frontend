@@ -93,7 +93,7 @@ export const paymentService = {
         description: description,
         status: 'pending',
         lightningInvoice: `lnbc${amountSats}n1p...mock_lightning_invoice_for_testing_purposes`,
-        expiresAt: Date.now() + 3600000, // 1 hour
+        expiresAt: Date.now() + 7200000, // 2 hours for demo mode
         createdAt: Date.now(),
         store: merchantId,
       };
