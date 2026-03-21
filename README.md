@@ -4,6 +4,10 @@
 
 Este repositorio contiene la **Frontend Application** (React + Vite + Tailwind), optimizada, pulida y lista para presentación en Hackathon.
 
+## 🔗 Enlaces Oficiales (Live Demo)
+- **Frontend KuriPay:** [https://hackaton-frontend-pearl.vercel.app/](https://hackaton-frontend-pearl.vercel.app/)
+- **Backend API:** [https://hackaton-backend-ecru.vercel.app/](https://hackaton-backend-ecru.vercel.app/)
+
 ---
 
 ## 👥 Roles del Ecosistema
