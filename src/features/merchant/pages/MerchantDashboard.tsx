@@ -45,13 +45,13 @@ export function MerchantDashboard() {
   }, [user]);
 
   const tabs = [
-    { id: 'trades', label: 'Trade History' },
-    { id: 'protocol', label: 'Routing Protocol' },
+    { id: 'trades', label: 'Historial de Transacciones' },
+    { id: 'protocol', label: 'Protocolo de Enrutamiento' },
   ];
 
   return (
     <div className="h-full flex flex-col bg-slate-900 overflow-hidden">
-      <SEO title="Trading Terminal | KuriPay" />
+      <SEO title="Panel de Local / Comercio | KuriPay" />
       
       <TradingTerminalLayout
         ticker={<TickerHeader />}
@@ -84,7 +84,7 @@ export function MerchantDashboard() {
                 </div>
               ) : isLoading ? (
                 <div className="p-12 text-center text-slate-400 text-[11px] font-black uppercase tracking-widest animate-pulse">
-                  Syncing Ledger Data...
+                  Sincronizando Datos del Libro Mayor...
                 </div>
               ) : (
                 <TransactionTable transactions={transactions} hideHeader />

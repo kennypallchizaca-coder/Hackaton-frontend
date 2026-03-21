@@ -1,289 +1,146 @@
-# 🚀 KuriPay — Enterprise Crypto Payment & Trading Platform
+# 🚀 KuriPay — Plataforma de Pagos y Trading Cripto Institucional
 
-**KuriPay** is a production-grade Full-Stack crypto platform that bridges traditional finance (Fiat) with the Web3 ecosystem. It unifies trading, Lightning Network payments, and compliance tools in a single professional-grade interface.
+**KuriPay** es una plataforma Full-Stack de grado producción que conecta el sistema financiero tradicional (Fiat) con el ecosistema Web3. Centraliza el trading, los pagos vía Lightning Network y herramientas de cumplimiento normativo en una interfaz profesional de alto rendimiento.
 
 > **Stack:** React 18 + TypeScript · NestJS · Prisma + PostgreSQL · Redis · Tailwind CSS · JWT Auth
 
 ---
 
-## 🌐 Live Routes
+## 🌐 Mapeo de Rutas
 
-| URL | Description |
+| URL | Descripción |
 |-----|-------------|
-| `/` | Public Landing Page |
-| `/login` | Login (JWT authentication) |
-| `/register` | New user registration |
-| `/app` | Trading Dashboard (protected) |
-| `/app/payments` | POS Terminal (protected) |
-| `/app/transactions` | Transaction History (protected) |
-| `/app/compliance` | Compliance & KYT Panel (protected) |
-| `/app/settings` | User Settings (protected) |
+| `/` | Landing Page Pública |
+| `/login` | Inicio de Sesión (JWT) |
+| `/register` | Registro de nuevos usuarios |
+| `/app` | Dashboard de Trading (Protegido) |
+| `/app/payments` | Terminal Punto de Venta / QR (Protegido) |
+| `/app/transactions` | Historial de Transacciones (Protegido) |
+| `/app/compliance` | Panel de Cumplimiento & KYT (Protegido) |
+| `/app/settings` | Configuración de Usuario (Protegido) |
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Arquitectura del Sistema
 
+```mermaid
+graph TD
+    A[Frontend: React 18 + TS] <-->|HTTP/JWT| B[Backend: NestJS API]
+    B <-->|Prisma ORM| C[(PostgreSQL)]
+    B <-->|DASHBOARD| D[(Redis Cache)]
 ```
-Frontend (React 18 + TS + Vite)
-         ↕ HTTP/JWT (Axios interceptors)
-Backend  (NestJS modular API)
-         ↕ Prisma ORM
-Database (PostgreSQL + Redis cache)
-```
-
-### Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| UI Framework | React 18 + TypeScript |
-| Bundler | Vite (HMR dev server) |
-| Styling | Tailwind CSS (navy/slate palette) |
-| State | Zustand (auth session) |
-| Router | React Router DOM v6 |
-| HTTP | Axios with JWT auto-refresh |
-| Charts | Recharts |
-| Backend | NestJS (modular REST API) |
-| ORM | Prisma → PostgreSQL |
-| Cache | Redis (session + queues) |
 
 ---
 
-## 🧩 User Roles
+## 🧩 Modelo de Circulación Económica
 
-The entire interface adapts based on who logs in:
+El sistema opera bajo un modelo de tres roles con flujos específicos de dinero (Fiat) y activos (Cripto):
 
-| Role | Access |
-|------|--------|
-| **Consumer** | Trading dashboard, order history, settings |
-| **Merchant** | POS Terminal, trading, order history |
-| **Liquidity Agent** | Trading, compliance, order management |
-| **Admin** | Full access to all panels |
+### 1. 👤 El Consumidor
+- **Compra/Venta**: Puede comprar cripto con dinero real y vender sus criptos únicamente a los **Transaccionadores**.
+- **Gasto**: Puede gastar sus criptos exclusivamente en los **Locales**.
+- **Objetivo**: Usuario final que utiliza el sistema para ahorro e intercambio de bienes.
 
----
+### 2. ⚡ El Transaccionador (Agente de Liquidez)
+- **Compra**: Adquiere cripto con dinero real de otros Transaccionadores, Consumidores y Locales.
+- **Venta**: Vende cripto por dinero real a otros Transaccionadores y Consumidores.
+- **Objetivo**: Es el puente de liquidez que permite la entrada y salida de capital (Fiat <-> Cripto) en el sistema.
 
-## 🕹️ Feature Guide: What Every Button Does
-
-### 📈 Trading Terminal (`/app`)
-
-The main exchange engine of the platform.
-
-#### Header Bar (TickerHeader)
-Displays the live BTC/USDT price, 24h change, 24h High/Low, and volumes pulled in real time.
-
-#### Trade Mode
-- **`Spot`** — The active trading mode. Allows 1:1 direct asset exchange.
-
-#### Order Types
-| Option | What it Does |
-|--------|-------------|
-| `Limit` | You set a specific price. The order executes only if the market reaches that price. |
-| `Market` | Buys/sells instantly at the current market price. |
-| `Stop-limit` | A two-step trigger: activates a Limit order once the price reaches a "stop" threshold. |
-
-#### Order Fields
-| Field | Description |
-|-------|-------------|
-| `Price` | In USDT — the price per BTC you're willing to trade at. |
-| `Amount` | How much BTC you want to buy or sell. |
-| `Total` | Auto-calculated: `Price × Amount`. |
-| `% Slider` | Quickly fills the Amount field using 25%, 50%, 75%, or 100% of your available balance. |
-
-#### Action Buttons
-| Button | Action |
-|--------|--------|
-| `Buy BTC` (green) | Sends a buy order to the backend. Debits USDT, credits BTC. |
-| `Sell BTC` (red) | Sends a sell order. Debits BTC, credits USDT. |
-
-#### OrderBook Panel
-Displays live buy (bids) and sell (asks) orders from liquidity agents, showing depth and spread.
+### 3. 🏪 El Local (Comercio o Servicio)
+- **Gasto**: Puede pagar a otros Locales (B2B) usando cripto.
+- **Venta**: Solo puede vender sus criptos por dinero real a los **Transaccionadores**.
+- **Objetivo**: Punto de aceptación de pagos que recircula el valor dentro del ecosistema empresarial o liquida sus ganancias.
 
 ---
 
-### 📱 POS Terminal (`/app/payments`)
+## 🕹️ Guía de Funcionalidades: ¿Para qué sirve cada botón?
 
-Designed for merchants to accept crypto payments in physical and digital stores.
+### 📈 Terminal de Trading (`/app`)
 
-#### Step 1 — Configure Payment
-| Field | Description |
-|-------|-------------|
-| `Payment Amount` | Enter the value to charge the customer. |
-| `SATS / USD / BTC` | Toggle selects the currency unit for the amount. USD and BTC are auto-converted to SATS internally using a fixed exchange rate. |
-| `Merchant Node` | Select which store/location node receives the payment. |
-| `Order ID` | Auto-generated unique identifier for this transaction (e.g. `GEN-73291`). |
-| `Internal Memo` | Optional description (e.g. "Coffee × 2, sandwich"). |
+El motor de intercambio principal de la plataforma.
 
-#### Step 2 — How the QR Code is Generated
+#### Ticker Header
+Muestra el precio en vivo de BTC/USD, el cambio en 24h, máximos/mínimos y volúmenes institucionales.
 
-When you press **`Generate Terminal QR`**:
+#### Tipos de Órdenes
+- **`Limit`** (Límite): Tú defines el precio. La orden se ejecuta solo si el mercado llega a ese punto.
+- **`Market`** (Mercado): Compra/vende instantáneamente al mejor precio disponible.
+- **`Stop-limit`** (Parada): Activa una orden límite cuando el precio toca un umbral de "disparo".
 
-1. **Currency conversion**: if USD or BTC, converts to SATS:
-   - `1 USD → 1,587 SATS` (fixed rate)
-   - `1 BTC → 100,000,000 SATS`
-2. **API call** → `POST /payments/create` sends `{ amount_sats, description, merchantId, currency: "BTC" }` to the NestJS backend.
-3. **Backend generates** a **Lightning Network BOLT-11 invoice** (`lnbc...` payment request string) and stores it in PostgreSQL with a 15-minute expiry.
-4. **Frontend receives** the invoice object with the `lightningInvoice` string.
-5. **QRPaymentCard renders** the `lightningInvoice` string as a QR code using a QR generation library. The customer scans this code with any Lightning wallet (Strike, Muun, Phoenix, etc.).
-
-#### Step 3 — Real-Time Payment Polling
-
-Once the QR code is displayed, the frontend **polls every 3 seconds** → `GET /payments/{id}/status`.
-
-- If the backend returns `paid` or `completed`, the terminal automatically advances to the **Receipt screen**.
-- The polling stops gracefully when the component unmounts or when payment is confirmed.
-
-#### Step 4 — Receipt Screen
-Displays:
-- ✅ Settlement confirmation
-- Amount in SATS
-- Truncated transaction ID
-- `Receipt` button (for printing/export)
-- `New Payment` button to reset the terminal
-
-#### Recent Payments
-A live feed at the bottom of the left panel showing the last paid/expired invoices for that merchant.
+#### Panel de Operación (TradePanel)
+- **`Comprar BTC`**: Envía una solicitud de compra. Debita USD y acredita BTC.
+- **`Vender BTC`**: Envía una solicitud de venta. Debita BTC y acredita USD.
+- **`Deslizador %`**: Llena automáticamente la cantidad usando el 25%, 50%, 75% o 100% de tu saldo disponible.
 
 ---
 
-### 🛡️ Compliance Panel (`/app/compliance`)
+### 📱 Terminal POS y Pagos QR (`/app/payments`)
 
-#### Tab 1 — `Safety · KYT` (Know Your Transaction)
-- Fetches alert records from `GET /compliance/kyt-alerts`.
-- Each incoming payment is scored as `Low`, `Medium`, or `High` risk.
-- **High Risk** entries are flagged in red and can trigger a block.
+Diseñado para que los **Locales** acepten pagos cripto de forma física o digital.
 
-#### Tab 2 — `Proof of Innocence (PoI)`
-If a transaction is blocked due to a KYT risk flag:
-1. Click **`Generate ZK-Proof`**.
-2. The frontend calls `POST /compliance/proof-of-innocence` with the transaction ID.
-3. The backend generates a **Zero-Knowledge cryptographic proof** — this lets the merchant prove their funds are legitimate **without revealing all personal information**.
-4. The proof can be submitted to regulators to unblock the payment.
+#### ¿Cómo se genera el código QR?
+1. **Configuración**: El comercio ingresa el monto (en USD, SATS o BTC).
+2. **Conversión**: El sistema convierte automáticamente:
+   - `1 USD → 1,587 SATS` (tasa fija de ejemplo).
+3. **Petición al Backend**: Al presionar **`Generar QR`**, se envía un `POST /payments/create`.
+4. **Generación de Invoice**: El servidor genera una factura **BOLT-11 de Lightning Network** (un string largo que empieza con `lnbc...`).
+5. **Renderizado**: El componente `QRPaymentCard` toma ese string y lo convierte en un código QR escaneable por cualquier billetera (Strike, Muun, Phoenix, etc.).
 
-#### Tab 3 — `Audit Trail`
-- Fetches all events from `GET /audit/events` (admin/auditor only).
-- Displays an **immutable log** of who did what, when, and on which record.
-- Non-admin users receive an empty list (403 handled gracefully).
+#### Confirmación en Tiempo Real
+Una vez generado el QR, el sistema realiza una consulta (**polling**) cada 3 segundos al endpoint `GET /payments/{id}/status`. Si el pago se detecta en el nodo, la terminal avanza automáticamente a la pantalla de **Recibo**.
 
 ---
 
-### ⚙️ Settings (`/app/settings`)
-Manage your user profile, notification preferences, and security keys.
+### 🛡️ Cumplimiento y Seguridad (`/app/compliance`)
+
+#### KYT (Know Your Transaction)
+Analiza cada transacción entrante. Si una billetera es sospechosa, el sistema marca el riesgo como **Medio** o **Alto** (en rojo).
+
+#### ZK-Proof (Prueba de Inocencia)
+Si un pago es bloqueado, el usuario puede generar una **Prueba de Conocimiento Cero (Zero-Knowledge Proof)**. Esto genera un certificado criptográfico que demuestra el origen lícito de los fondos **sin revelar su identidad privada** ni datos sensibles a terceros.
 
 ---
 
-## 📁 Project Structure
+## 📁 Estructura del Proyecto
 
 ```
 src/
- ├─ api/                 # Axios base client with JWT interceptors
+ ├─ api/                 # Cliente Axios con interceptores JWT
  ├─ components/
- │   ├─ auth/            # ProtectedRoute guard
- │   ├─ common/          # SEO, Icons
- │   ├─ layout/          # Sidebar, Topbar, TickerHeader
- │   └─ ui/              # QRPaymentCard, BalanceCard, inputs
  ├─ features/
- │   ├─ auth/            # Login, Register, authStore (Zustand)
- │   ├─ compliance/      # KYT, ZK-Proof, Audit Trail
- │   ├─ consumer/        # Consumer dashboard & wallets
- │   ├─ landing/         # Public landing page
- │   ├─ liquidity/       # Liquidity agent dashboard
- │   ├─ merchant/        # Merchant dashboard & metrics
- │   ├─ payments/        # POS terminal, paymentService, QR flow
- │   ├─ settings/        # User settings page
- │   ├─ shared/          # SystemFlowMap (shared across dashboards)
- │   ├─ trading/         # Chart, TradePanel, OrderBook, TradingTerminal
- │   └─ wallets/         # walletsService (balance queries)
- ├─ layouts/             # DashboardLayout (Sidebar + Topbar wrapper)
- ├─ routes/              # AppRoutes (public + protected routes)
- ├─ types/               # Global TypeScript interfaces
- └─ utils/               # cn() utility (Tailwind class merging)
+ │   ├─ auth/            # Registro, Login y Almacén de Sesión
+ │   ├─ compliance/      # KYT y Pruebas ZK
+ │   ├─ consumer/        # Dashboard de Consumidor
+ │   ├─ landing/         # Landing Page moderna
+ │   ├─ liquidity/       # Dashboard de Transaccionador
+ │   ├─ merchant/        # Dashboard de Locales
+ │   ├─ payments/        # Terminal POS y lógica de QR
+ │   └─ shared/          # Mapa de flujo del sistema
+ ├─ layouts/             # Envoltorios de navegación (Sidebar/Topbar)
+ ├─ routes/              # Manejo de rutas y seguridad
+ └─ types/               # Definiciones de TypeScript
 ```
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Instalación y Uso
 
-### Requirements
+### Requisitos
 - Node.js `18+`
-- npm or yarn
-- PostgreSQL + Redis (for backend)
+- npm o yarn
+- PostgreSQL + Redis (Backend)
 
-### Frontend
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Configure environment
-cp .env.example .env.local
-# Set VITE_API_URL=http://localhost:3000/api/v1
-
-# 3. Start development server
-npm run dev
-# → http://localhost:5173
-```
-
-### Backend
-
-```bash
-cd ../Hackaton-Backend
-
-npm install
-cp .env.example .env
-# Configure DATABASE_URL, REDIS_URL, JWT_SECRET
-
-npx prisma migrate dev
-npm run start:dev
-# → http://localhost:3000
-```
+### Pasos
+1. Clonar el repositorio.
+2. Ejecutar `npm install`.
+3. Configurar `.env` con la URL de la API.
+4. Ejecutar `npm run dev` para iniciar el servidor de desarrollo en `http://localhost:5173`.
 
 ---
 
-## 🔌 Key API Endpoints
+## 🛡️ Estándares del Proyecto
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/auth/login` | Returns JWT access + refresh tokens |
-| `POST` | `/auth/register` | Creates a new user account |
-| `GET` | `/wallets/me` | Returns user wallet balances |
-| `GET` | `/transactions` | Returns paginated transaction history |
-| `POST` | `/payments/create` | Creates a Lightning Network invoice |
-| `GET` | `/payments/:id/status` | Polls payment status (pending/paid/expired) |
-| `POST` | `/payments/:id/regenerate` | Regenerates an expired QR invoice |
-| `GET` | `/compliance/kyt-alerts` | Returns KYT risk alerts |
-| `POST` | `/compliance/proof-of-innocence` | Generates ZK proof for disputed tx |
-| `GET` | `/audit/events` | Returns immutable audit log (admin only) |
-
----
-
-## ⚡ QR Payment Flow (Sequence)
-
-```
-Merchant                 Frontend                 Backend (NestJS)
-   |                        |                            |
-   |-- Enter amount ------->|                            |
-   |-- Select currency ---->|                            |
-   |-- Press "Generate QR"->|                            |
-   |                        |-- POST /payments/create -->|
-   |                        |                            |-- Generate BOLT-11 invoice
-   |                        |                            |-- Store in PostgreSQL
-   |                        |<-- { lightningInvoice } ---|
-   |                        |-- Render QR code           |
-   |<-- Display QR ---------|                            |
-   |                        |                            |
-Customer scans QR with Lightning Wallet                  |
-   |                        |                            |<-- Payment received on-chain
-   |                        |-- GET /payments/:id/status-|
-   |                        |<-- { status: "paid" } -----|
-   |                        |-- Show Receipt screen      |
-   |<-- Payment Confirmed --|                            |
-```
-
----
-
-## 🛡️ Standards
-
-- **TypeScript Strict Mode** — end-to-end type safety.
-- **JWT Auth with auto-refresh** — Axios interceptors handle token rotation silently.
-- **Zero dead code** — all features audited and orphan files removed.
-- **Responsive design** — optimized for desktop 1024px to 4K.
-- **Secret masking** — API keys displayed as `sk_test_••••` on all user-facing surfaces.
+- **Seguridad**: Máscara automática de claves secretas (`sk_test_••••`).
+- **Rendimiento**: Interfaz optimizada para pantallas desde 1024px hasta 4K.
+- **Tipado Estricto**: 100% de los datos estructurados con interfaces de TS.
+- **Código Limpio**: Auditoría completa realizada para eliminar archivos huérfanos y lógica duplicada.

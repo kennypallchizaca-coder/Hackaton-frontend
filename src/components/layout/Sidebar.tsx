@@ -68,7 +68,7 @@ export function Sidebar() {
     if (user.role === 'consumer') {
       return ['Trade', 'Orders', 'Settings'].includes(item.name);
     }
-    if (user.role === 'liquidity_agent') {
+    if (user.role === 'transaccionador') {
       return ['Trade', 'Orders', 'Compliance', 'Settings'].includes(item.name);
     }
     if (user.role === 'merchant') {

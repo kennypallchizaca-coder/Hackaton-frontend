@@ -15,12 +15,12 @@ export function SystemFlowMap() {
         </svg>
       ),
       color: '#3b82f6',
-      desc: 'Compra/Vende Crypto con Agentes. Paga a Locales.',
+      desc: 'Compra/Vende Cripto con Transaccionadores. Gasta en Locales.',
       active: user?.role === 'consumer'
     },
     { 
-      id: 'liquidity_agent', 
-      label: 'Agente (Bridge)', 
+      id: 'transaccionador', 
+      label: 'Transaccionador', 
       icon: (
         <svg xmlns="http://www.w3.org/.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 21h18"></path>
@@ -34,8 +34,8 @@ export function SystemFlowMap() {
         </svg>
       ),
       color: '#10b981',
-      desc: 'Puente Fiat <> Crypto. Provee liquidez institucional.',
-      active: user?.role === 'liquidity_agent'
+      desc: 'Puente Fiat <> Crypto. Transacciona con todos los roles.',
+      active: user?.role === 'transaccionador'
     },
     { 
       id: 'merchant', 
@@ -48,7 +48,7 @@ export function SystemFlowMap() {
       ),
 
       color: '#94a3b8',
-      desc: 'Recibe pagos Crypto. Liquida a Fiat con Agentes.',
+      desc: 'Gasta Cripto en otros Locales. Vende Cripto por Fiat a Transaccionadores.',
       active: user?.role === 'merchant'
     }
   ];
@@ -111,17 +111,17 @@ export function SystemFlowMap() {
         {/* Directional Flow technical info */}
         <div className="mt-8 grid grid-cols-2 gap-4">
            <div className="bg-slate-800 border border-l-2 border-slate-800 border-l-blue-500 p-3">
-              <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-1">Authorization Matrix</span>
-              <p className="text-[10px] text-slate-400 leading-relaxed">
-                 Consumers can <span className="text-slate-50 font-bold">ONLY</span> trade fiat via liquidity agents. Direct fiat-to-merchant crypto payments are restricted to authorized merchant settlement protocols.
-              </p>
-           </div>
-           <div className="bg-slate-800 border border-l-2 border-slate-800 border-l-emerald-500 p-3">
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest block mb-1">Bridge Protocol</span>
-              <p className="text-[10px] text-slate-400 leading-relaxed">
-                 Agents bridge the <span className="text-slate-50 font-bold">Network Gap</span>, absorbing volatility and ensuring 1:1 parity between collected crypto and fiat settlement requests.
-              </p>
-           </div>
+            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-1">Circulation Matrix</span>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+               Consumers <span className="text-slate-50 font-bold">MUST</span> use Transaccionadores for fiat on/off-boarding. Merchants earn from Consumers and can only off-ramp via Transaccionadores.
+            </p>
+         </div>
+         <div className="bg-slate-800 border border-l-2 border-slate-800 border-l-emerald-500 p-3">
+            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest block mb-1">P2P Liquidity Protocol</span>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+               Transaccionadores act as the <span className="text-slate-50 font-bold">Economic Engine</span>, facilitating fiat flow across all roles while maintaining deep system liquidity.
+            </p>
+         </div>
         </div>
       </div>
     </div>

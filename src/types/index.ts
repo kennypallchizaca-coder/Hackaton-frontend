@@ -1,4 +1,4 @@
-export type UserRole = 'consumer' | 'liquidity_agent' | 'merchant' | 'admin';
+export type UserRole = 'consumer' | 'transaccionador' | 'merchant' | 'admin';
 
 export interface User {
   id: string;

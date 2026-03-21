@@ -38,35 +38,35 @@ export function TradePanel() {
 
   const isConsumer = user?.role === 'consumer';
   const isMerchant = user?.role === 'merchant';
-  const isAgent = user?.role === 'liquidity_agent';
+  const isAgent = user?.role === 'transaccionador';
 
   // Dynamic Labels based on Role
   const getBuyLabel = () => {
-    if (isConsumer) return "Buy BTC from Agent";
-    if (isMerchant) return "Restock Inventory";
-    if (isAgent) return "Add Liquidity";
-    return "Buy BTC";
+    if (isConsumer) return "Comprar BTC (vía P2P)";
+    if (isMerchant) return "N/A (Sólo Ventas)";
+    if (isAgent) return "Proveer Liquidez";
+    return "Comprar BTC";
   };
 
   const getSellLabel = () => {
-    if (isConsumer) return "Sell BTC for Fiat";
-    if (isMerchant) return "Settle to Fiat";
-    if (isAgent) return "Manage Reserves";
-    return "Sell BTC";
+    if (isConsumer) return "Vender BTC (vía P2P)";
+    if (isMerchant) return "Liquidar a Fiat";
+    if (isAgent) return "Gestionar Reservas";
+    return "Vender BTC";
   };
 
   const getFiatBalanceLabel = () => {
-    if (isConsumer) return "Avbl USD";
-    if (isMerchant) return "Settled USD";
-    if (isAgent) return "System Fiat";
-    return "Avbl USDT";
+    if (isConsumer) return "Saldo USD";
+    if (isMerchant) return "USD Liquidado";
+    if (isAgent) return "Fiat del Sistema";
+    return "Saldo USD";
   };
 
   const getCryptoBalanceLabel = () => {
-    if (isConsumer) return "Avbl BTC";
-    if (isMerchant) return "Collected BTC";
-    if (isAgent) return "System BTC";
-    return "Avbl BTC";
+    if (isConsumer) return "Saldo BTC";
+    if (isMerchant) return "BTC Recaudado";
+    if (isAgent) return "BTC del Sistema";
+    return "Saldo BTC";
   };
 
   return (
@@ -145,7 +145,7 @@ export function TradePanel() {
                   onChange={(e: any) => setPrice(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
-                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USDT</span>
+                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
               </div>
 
               <div className="relative">
@@ -183,7 +183,7 @@ export function TradePanel() {
                   onChange={(e: any) => setTotal(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
-                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USDT</span>
+                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
               </div>
 
               <div className="pt-2">
@@ -216,7 +216,7 @@ export function TradePanel() {
                   onChange={(e: any) => setPrice(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
-                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USDT</span>
+                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
               </div>
 
               <div className="relative">
@@ -254,7 +254,7 @@ export function TradePanel() {
                   onChange={(e: any) => setTotal(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
-                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USDT</span>
+                <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
               </div>
 
               <div className="pt-2">

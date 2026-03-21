@@ -26,7 +26,7 @@ export function Login() {
     setError('');
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/app');
     } catch {
       setError('Credenciales incorrectas. Intenta de nuevo.');
     }

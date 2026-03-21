@@ -17,8 +17,8 @@ const mapBackendRole = (roles: string[]): UserRole => {
   if (role === 'admin' || role === 'merchant' || role === 'consumer') {
     return role as UserRole;
   }
-  if (role === 'agent' || role === 'liquidity_agent') {
-    return 'liquidity_agent';
+  if (role === 'agent' || role === 'liquidity_agent' || role === 'transaccionador') {
+    return 'transaccionador';
   }
   return 'consumer';
 };

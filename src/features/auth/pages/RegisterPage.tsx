@@ -30,7 +30,7 @@ export function Register() {
 
     try {
       await register(formData.fullName, formData.email, formData.password, formData.role);
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const msg = err.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg || 'Error al crear la cuenta. Intenta de nuevo.');
@@ -38,9 +38,9 @@ export function Register() {
   };
 
   const roles = [
-    { id: 'CONSUMER', label: 'Consumidor', desc: 'Compre y venda cripto' },
-    { id: 'AGENT', label: 'Agente', desc: 'Provee liquidez fiat' },
-    { id: 'MERCHANT', label: 'Comercio', desc: 'Reciba pagos cripto' }
+    { id: 'CONSUMER', label: 'Consumidor', desc: 'Compra/vende con Transaccionadores y gasta en Locales' },
+    { id: 'AGENT', label: 'Transaccionador', desc: 'Compra/vende Cripto con dinero real a todos' },
+    { id: 'MERCHANT', label: 'Local', desc: 'Recibe pagos Cripto y haz transacciones B2B' }
   ];
 
   return (

@@ -17,7 +17,7 @@ export function BalanceCard({ title, fiatAmount, cryptoAmount }: BalanceCardProp
 
         <div className="space-y-4">
           <div>
-            <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-tighter">FIAT BALANCE</div>
+            <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-tighter">SALDO FIAT</div>
             <div className="text-3xl font-black text-slate-50">
               <span className="text-blue-500 text-xl mr-1">$</span>
               {fiatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -27,7 +27,7 @@ export function BalanceCard({ title, fiatAmount, cryptoAmount }: BalanceCardProp
           <div className="h-px bg-slate-700" />
 
           <div>
-            <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-tighter">CRYPTO BALANCE</div>
+            <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-tighter">SALDO CRIPTO</div>
             <div className="text-xl font-black text-slate-50">
               {cryptoAmount.toFixed(8)} <span className="text-blue-500 text-sm">BTC</span>
             </div>

@@ -37,7 +37,7 @@ export function AgentDashboard() {
           walletsService.getMyWallets(),
           complianceService.getAllAlerts()
         ]);
-        setTransactions(txs.filter(tx => tx.senderId === user?.id || tx.receiverId === user?.id || tx.senderRole === 'liquidity_agent'));
+        setTransactions(txs.filter(tx => tx.senderId === user?.id || tx.receiverId === user?.id || tx.senderRole === 'transaccionador'));
         setOrders(ords);
         setWallets(wls);
         setAlerts(kytAlerts);
@@ -55,16 +55,16 @@ export function AgentDashboard() {
   const fiatReserve = wallets.find(w => w.currency === 'USD' || w.currency === 'FIAT')?.balance || '0';
 
   const tabs = [
-    { id: 'node', label: 'Node Overview' },
-    { id: 'orders', label: `Active Orders (${orders.length})` },
-    { id: 'history', label: 'Bridging Logs' },
-    { id: 'compliance', label: 'Compliance & KYT' },
-    { id: 'protocol', label: 'Routing Protocol' },
+    { id: 'node', label: 'Vista del Nodo' },
+    { id: 'orders', label: `Órdenes Activas (${orders.length})` },
+    { id: 'history', label: 'Registros de Intercambio' },
+    { id: 'compliance', label: 'Cumplimiento & KYT' },
+    { id: 'protocol', label: 'Protocolo de Enrutamiento' },
   ];
 
   return (
     <div className="h-full flex flex-col bg-slate-900 border-l border-slate-800 overflow-hidden select-none font-sans">
-      <SEO title="Liquidity Node Terminal | KuriPay" />
+      <SEO title="Terminal de Transaccionador | KuriPay" />
 
       <TradingTerminalLayout
         ticker={<TickerHeader />}
@@ -90,7 +90,7 @@ export function AgentDashboard() {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase tracking-tighter animate-pulse">Node Online</span>
+                <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase tracking-tighter animate-pulse">Nodo en Línea</span>
               </div>
             </div>
 
@@ -100,19 +100,19 @@ export function AgentDashboard() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-slate-800 border border-slate-700 p-4 rounded-sm">
-                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">BTC Reserves</span>
+                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">Reservas BTC</span>
                       <div className="text-2xl font-black text-slate-50">{cryptoReserve} <span className="text-sm text-slate-400 font-normal">BTC</span></div>
                     </div>
                     <div className="bg-slate-800 border border-slate-700 p-4 rounded-sm">
-                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">Fiat Reserves</span>
+                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">Reservas Fiat</span>
                       <div className="text-2xl font-black text-slate-50">${parseFloat(fiatReserve).toLocaleString()} <span className="text-sm text-slate-400 font-normal">USD</span></div>
                     </div>
                     <div className="bg-slate-800 border border-slate-700 p-4 rounded-sm">
-                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">Health Score</span>
+                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">Puntaje de Salud</span>
                       <div className="text-2xl font-black text-emerald-500">98.2%</div>
                     </div>
                     <div className="bg-slate-800 border border-slate-700 p-4 rounded-sm">
-                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">24h Volume</span>
+                      <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest block mb-1">Volumen 24h</span>
                       <div className="text-2xl font-black text-blue-500">$124.5k</div>
                     </div>
                   </div>
@@ -131,7 +131,7 @@ export function AgentDashboard() {
               {activeTab === 'orders' && (
                 <div className="bg-slate-900 border border-slate-800 rounded-sm overflow-hidden">
                   <div className="px-5 py-3 border-b border-slate-800 bg-slate-800/50">
-                    <h3 className="font-bold text-slate-50 text-[12px] uppercase tracking-widest">Post-Trade Settlement Orders</h3>
+                    <h3 className="font-bold text-slate-50 text-[12px] uppercase tracking-widest">Órdenes de Liquidación Post-Trade</h3>
                   </div>
                   <div className="p-4">
                     {isLoading ? (
@@ -163,7 +163,7 @@ export function AgentDashboard() {
               {activeTab === 'history' && (
                 <div className="bg-slate-900 border border-slate-800 rounded-sm overflow-hidden">
                   <div className="px-5 py-3 border-b border-slate-800 bg-slate-800/50">
-                    <h3 className="font-bold text-slate-50 text-[12px] uppercase tracking-widest">Provision Logs</h3>
+                    <h3 className="font-bold text-slate-50 text-[12px] uppercase tracking-widest">Registros de Provisión</h3>
                   </div>
                   <TransactionTable transactions={transactions} hideHeader />
                 </div>

@@ -8,7 +8,8 @@ export function Dashboard() {
   const user = useAuthStore(state => state.user);
 
   if (user?.role === 'consumer') return <ConsumerDashboard />;
-  if (user?.role === 'liquidity_agent') return <AgentDashboard />;
+  const isAgent = user?.role === 'transaccionador';
+  if (isAgent) return <AgentDashboard />;
   if (user?.role === 'merchant') return <MerchantDashboard />;
 
   // Default fallback for admin or unknown roles

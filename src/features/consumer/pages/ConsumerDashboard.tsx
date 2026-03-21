@@ -45,15 +45,15 @@ export function ConsumerDashboard() {
   const cryptoBalance = wallets.find(w => w.currency === 'BTC' || w.currency === 'CRYPTO')?.balance || '0';
 
   const tabs = [
-    { id: 'dashboard', label: 'Advanced Overview' },
-    { id: 'trades', label: 'Trade History' },
-    { id: 'protocol', label: 'Routing Protocol' },
-    { id: 'funds', label: 'Wallets & Assets' },
+    { id: 'dashboard', label: 'Vista General' },
+    { id: 'trades', label: 'Historial de Transacciones' },
+    { id: 'protocol', label: 'Protocolo de Red' },
+    { id: 'funds', label: 'Billeteras y Activos' },
   ];
 
   return (
     <div className="h-full flex flex-col bg-slate-900 border-l border-slate-800 overflow-hidden select-none font-sans">
-      <SEO title="Advanced Trading | KuriPay" />
+      <SEO title="Panel de Consumidor | KuriPay" />
       
       <TradingTerminalLayout
         ticker={<TickerHeader />}
@@ -89,7 +89,7 @@ export function ConsumerDashboard() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <BalanceCard 
-                      title="Available Liquidity"
+                      title="Liquidez Disponible"
                       fiatAmount={parseFloat(fiatBalance)} 
                       cryptoAmount={parseFloat(cryptoBalance)} 
                     />
@@ -109,7 +109,7 @@ export function ConsumerDashboard() {
                       <div className="text-3xl font-black text-slate-50">L1 SECURE</div>
                       <div className="mt-2 text-[10px] text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Verified Transaction Path
+                        Ruta de Transacción Verificada
                       </div>
                     </div>
                   </div>
