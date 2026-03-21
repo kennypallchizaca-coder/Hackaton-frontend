@@ -1,45 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Copy, RefreshCw, CheckCircle2, Clock, XCircle, Zap } from '../common/Icons';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { CheckCircle2, Clock, Copy, RefreshCw, XCircle, Zap } from '../common/Icons';
 import { paymentService } from '../../features/payments/api/paymentService';
+import { buildInvoiceUrl, buildPaymentUrl } from '../../features/payments/utils/paymentLinks';
 import { type Invoice, type PaymentStatus } from '../../types';
 import { cn } from '../../utils/cn';
+import { QRCodeDisplay } from './QRCodeDisplay';
 
 interface QRPaymentCardProps {
   invoice: Invoice;
   onRegenerate: () => void;
 }
 
-const statusConfig: Record<PaymentStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
+const statusConfig: Record<PaymentStatus, { label: string; color: string; icon: ReactNode; bg: string }> = {
   pending: {
     label: 'Waiting for payment...',
     color: 'text-brand-yellow',
     icon: <Clock size={16} className="animate-pulse" />,
-    bg: 'bg-brand-yellow/10 border-brand-yellow/20'
+    bg: 'bg-brand-yellow/10 border-brand-yellow/20',
   },
   paid: {
     label: 'Payment received!',
     color: 'text-binance-green',
     icon: <CheckCircle2 size={16} />,
-    bg: 'bg-binance-green/10 border-binance-green/20'
+    bg: 'bg-binance-green/10 border-binance-green/20',
   },
   completed: {
     label: 'Completed',
     color: 'text-binance-green',
     icon: <CheckCircle2 size={16} />,
-    bg: 'bg-binance-green/10 border-binance-green/20'
+    bg: 'bg-binance-green/10 border-binance-green/20',
   },
   failed: {
     label: 'Payment failed',
     color: 'text-binance-red',
     icon: <XCircle size={16} />,
-    bg: 'bg-binance-red/10 border-binance-red/20'
+    bg: 'bg-binance-red/10 border-binance-red/20',
   },
   expired: {
     label: 'Invoice expired',
     color: 'text-binance-muted',
     icon: <XCircle size={16} />,
-    bg: 'bg-binance-gray border-binance-border'
-  }
+    bg: 'bg-binance-gray border-binance-border',
+  },
 };
 
 export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
@@ -51,141 +53,134 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
     setStatus(invoice.status);
   }, [invoice]);
 
-  // Countdown timer
   useEffect(() => {
     const update = () => {
-      const exp = typeof invoice.expiresAt === 'number' ? invoice.expiresAt : Date.now();
-      const remaining = Math.max(0, Math.floor((exp - Date.now()) / 1000));
+      const expiration = typeof invoice.expiresAt === 'number' ? invoice.expiresAt : Date.now();
+      const remaining = Math.max(0, Math.floor((expiration - Date.now()) / 1000));
       setTimeLeft(remaining);
+
       if (remaining === 0 && status === 'pending') {
         setStatus('expired');
       }
     };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [invoice.expiresAt, status]);
 
-  // Payment detection is handled by the parent/service via polling or SSE
-  // removing simulated timeout to ensure 100% real backend integration
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [invoice.expiresAt, status]);
 
   const handleCopy = useCallback(() => {
     const text = invoice.lightningInvoice || '';
-    if (text) {
-      navigator.clipboard.writeText(text).catch(() => {});
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    if (!text) {
+      return;
     }
+
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   }, [invoice.lightningInvoice]);
 
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
   const cfg = statusConfig[status] || statusConfig.pending;
-
+  const shareableInvoice = { ...invoice, status };
+  const invoiceUrl = buildInvoiceUrl(shareableInvoice);
+  const paymentUrl = buildPaymentUrl(shareableInvoice);
+  const invoiceQrCorrectionLevel = invoiceUrl.length > 180 ? 'M' : 'Q';
+  const paymentQrCorrectionLevel = paymentUrl.length > 180 ? 'L' : 'M';
   const currentAmountSats = invoice.amountSats || 0;
-  const btcUSD = (currentAmountSats / 100_000_000 * 63012.50).toFixed(2);
+  const btcUsd = (currentAmountSats / 100_000_000 * 63012.5).toFixed(2);
+  const isSettled = status === 'paid' || status === 'completed';
 
   return (
-    <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* QR CONTAINER */}
-      <div className={cn(
-        "relative p-4 bg-white rounded-[2rem] shadow-2xl transition-all duration-700 transform",
-        status === 'paid' || status === 'completed' ? "scale-105 border-4 border-binance-green shadow-[0_0_50px_rgba(14,203,129,0.3)]" : 
-        status === 'expired' ? "grayscale opacity-50" : "border-4 border-brand-yellow shadow-[0_0_50px_rgba(252,213,53,0.15)]"
-      )}>
-        {/* Success Overlay */}
-        {(status === 'paid' || status === 'completed') && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-[1.75rem] bg-binance-green/90 z-20 backdrop-blur-sm">
+    <div className="animate-in fade-in slide-in-from-bottom-4 flex flex-col items-center gap-6 duration-500">
+      <div
+        className={cn(
+          'relative rounded-[2rem] bg-white p-4 shadow-2xl transition-all duration-700',
+          isSettled
+            ? 'scale-105 border-4 border-binance-green shadow-[0_0_50px_rgba(14,203,129,0.3)]'
+            : status === 'expired'
+              ? 'grayscale opacity-50'
+              : 'border-4 border-brand-yellow shadow-[0_0_50px_rgba(252,213,53,0.15)]',
+        )}
+      >
+        {isSettled && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[1.75rem] bg-binance-green/90 backdrop-blur-sm">
             <div className="text-center text-binance-black">
               <CheckCircle2 size={64} className="mx-auto mb-3 animate-bounce" />
-              <p className="font-black text-2xl tracking-tight">PAID</p>
+              <p className="text-2xl font-black tracking-tight">PAID</p>
             </div>
           </div>
         )}
 
-        {/* Expired Overlay */}
         {status === 'expired' && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-[1.75rem] bg-binance-gray/90 z-20 backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[1.75rem] bg-binance-gray/90 backdrop-blur-sm">
             <div className="text-center text-binance-muted">
               <XCircle size={56} className="mx-auto mb-3" />
-              <p className="font-black text-xl">EXPIRED</p>
+              <p className="text-xl font-black">EXPIRED</p>
             </div>
           </div>
         )}
 
-        {/* REAL QR GENERATION VIA API */}
-        <div className="relative bg-white p-4 rounded-2xl shadow-inner border-4 border-binance-black">
-          <img 
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-              (status === 'paid' || status === 'completed')
-                ? `${window.location.origin}/invoice/${invoice.id}#payload=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({
-                    id: invoice.id,
-                    amount: invoice.amount,
-                    amountSats: invoice.amountSats,
-                    amountUsd: invoice.amountUsd,
-                    description: invoice.description,
-                    status: invoice.status,
-                    store: invoice.store,
-                    createdAt: invoice.createdAt
-                  }))))}`
-                : (invoice.lightningInvoice || '')
-            )}&bgcolor=ffffff&color=020617&margin=1`}
-            alt={status === 'paid' || status === 'completed' ? "Invoice QR Code" : "Payment QR Code"}
-            className="w-[240px] h-[240px] rounded-lg shadow-sm"
+        <div className="relative rounded-2xl border-4 border-binance-black bg-white p-4 shadow-inner">
+          <QRCodeDisplay
+            value={isSettled ? invoiceUrl : paymentUrl}
+            alt={isSettled ? 'Invoice QR Code' : 'Payment QR Code'}
+            width={320}
+            errorCorrectionLevel={isSettled ? invoiceQrCorrectionLevel : paymentQrCorrectionLevel}
+            className="shadow-sm"
+            imageClassName="h-[min(72vw,280px)] w-[min(72vw,280px)] rounded-lg sm:h-[280px] sm:w-[280px]"
           />
         </div>
       </div>
 
-      {/* Status Badge */}
-      <div className={cn(
-        "flex items-center gap-2 px-5 py-2.5 rounded-full border text-xs font-black uppercase tracking-widest shadow-lg transition-colors",
-        cfg.bg, cfg.color
-      )}>
+      <div
+        className={cn(
+          'flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-black uppercase tracking-widest shadow-lg transition-colors',
+          cfg.bg,
+          cfg.color,
+        )}
+      >
         {cfg.icon}
         {cfg.label}
       </div>
 
-      {/* Amount Display */}
-      <div className="text-center space-y-1">
+      <div className="space-y-1 text-center">
         <div className="flex items-center justify-center gap-2">
-           <Zap size={24} className="text-brand-yellow" fill="currentColor" />
-           <p className="text-4xl font-black text-binance-text tracking-tighter">
-             {currentAmountSats.toLocaleString()} <span className="text-xl text-brand-yellow">SATS</span>
-           </p>
+          <Zap size={24} className="text-brand-yellow" fill="currentColor" />
+          <p className="text-4xl font-black tracking-tighter text-binance-text">
+            {currentAmountSats.toLocaleString()} <span className="text-xl text-brand-yellow">SATS</span>
+          </p>
         </div>
-        <p className="text-sm font-medium text-binance-muted">≈ ${btcUSD} USD · 0.{String(currentAmountSats).padStart(8, '0').slice(-8)} BTC</p>
-        {invoice.description && <p className="text-xs text-binance-muted italic mt-2 opacity-80 decoration-dotted underline">"{invoice.description}"</p>}
+        <p className="text-sm font-medium text-binance-muted">
+          ~ ${btcUsd} USD · 0.{String(currentAmountSats).padStart(8, '0').slice(-8)} BTC
+        </p>
+        {invoice.description && (
+          <p className="mt-2 text-xs italic text-binance-muted opacity-80 underline decoration-dotted">
+            "{invoice.description}"
+          </p>
+        )}
       </div>
 
-      {/* Expiry */}
       {status === 'pending' && (
-        <div className="flex items-center gap-3 text-sm py-2 px-4 bg-binance-gray rounded-lg border border-binance-border">
-          <span className="text-binance-muted font-medium">Expires in</span>
-          <span className={cn(
-            "font-mono font-black text-lg",
-            timeLeft < 60 ? "text-binance-red animate-pulse" : "text-binance-text"
-          )}>
+        <div className="flex items-center gap-3 rounded-lg border border-binance-border bg-binance-gray px-4 py-2 text-sm">
+          <span className="font-medium text-binance-muted">Expires in</span>
+          <span
+            className={cn(
+              'font-mono text-lg font-black',
+              timeLeft < 60 ? 'animate-pulse text-binance-red' : 'text-binance-text',
+            )}
+          >
             {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
           </span>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-4 w-full pt-2">
-        {(status === 'paid' || status === 'completed') ? (
+      <div className="flex w-full flex-col gap-4 pt-2 sm:flex-row">
+        {isSettled ? (
           <button
-            onClick={() => window.open(`/invoice/${invoice.id}#payload=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({
-              id: invoice.id,
-              amount: invoice.amount,
-              amountSats: invoice.amountSats,
-              amountUsd: invoice.amountUsd,
-              description: invoice.description,
-              status: invoice.status,
-              store: invoice.store,
-              createdAt: invoice.createdAt
-            }))))}`, '_blank')}
-            className="w-full flex items-center justify-center gap-3 py-4 bg-brand-yellow border border-brand-yellow rounded-xl hover:bg-yellow-400 active:scale-95 transition-all font-black text-sm text-binance-black shadow-md"
+            onClick={() => window.open(invoiceUrl, '_blank', 'noopener,noreferrer')}
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-brand-yellow bg-brand-yellow py-4 text-sm font-black text-binance-black shadow-md transition-all hover:bg-yellow-400 active:scale-95"
           >
             <CheckCircle2 size={18} /> VER FACTURA / PDF
           </button>
@@ -194,17 +189,21 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
             <button
               onClick={handleCopy}
               disabled={status !== 'pending'}
-              className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-gray border border-binance-border rounded-xl hover:bg-white/5 active:scale-95 transition-all font-black text-sm text-binance-text disabled:opacity-30 shadow-md"
+              className="flex-1 rounded-xl border border-binance-border bg-binance-gray py-4 text-sm font-black text-binance-text shadow-md transition-all hover:bg-white/5 active:scale-95 disabled:opacity-30"
             >
-              {copied ? <CheckCircle2 size={18} className="text-binance-green" /> : <Copy size={18} />}
-              {copied ? 'COPIED' : 'COPY INVOICE'}
+              <span className="flex items-center justify-center gap-3">
+                {copied ? <CheckCircle2 size={18} className="text-binance-green" /> : <Copy size={18} />}
+                {copied ? 'COPIED' : 'COPY INVOICE'}
+              </span>
             </button>
-            <button 
-              onClick={onRegenerate} 
+            <button
+              onClick={onRegenerate}
               disabled={status !== 'pending'}
-              className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-black border border-brand-yellow/30 text-brand-yellow rounded-xl hover:bg-brand-yellow hover:text-binance-black active:scale-95 transition-all font-black text-sm disabled:opacity-30 shadow-md"
+              className="flex-1 rounded-xl border border-brand-yellow/30 bg-binance-black py-4 text-sm font-black text-brand-yellow shadow-md transition-all hover:bg-brand-yellow hover:text-binance-black active:scale-95 disabled:opacity-30"
             >
-              <RefreshCw size={18} /> NEW QR
+              <span className="flex items-center justify-center gap-3">
+                <RefreshCw size={18} /> NEW QR
+              </span>
             </button>
           </>
         )}
@@ -213,11 +212,15 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
       {status === 'pending' && (
         <button
           onClick={() => paymentService.simulatePayment(invoice.id)}
-          className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-slate-950 transition-all font-black text-[10px] uppercase tracking-widest mt-2"
+          className="mt-2 w-full rounded-lg border border-emerald-500/20 bg-emerald-500/10 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-500 transition-all hover:bg-emerald-500 hover:text-slate-950"
         >
           Simular Pago (Testing)
         </button>
       )}
+
+      <p className="max-w-xs text-center text-[11px] font-medium leading-5 text-binance-muted">
+        El QR usa un enlace publico compatible con camaras moviles y abre el pago o la factura correcta segun el estado.
+      </p>
     </div>
   );
 }

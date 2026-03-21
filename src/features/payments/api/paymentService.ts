@@ -1,6 +1,65 @@
 import apiClient from '../../../api/apiClient';
 import { type Invoice, type PaymentStatus } from '../../../types';
 
+const DEMO_PAYMENT_FALLBACK_ENABLED =
+  import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO_PAYMENT_FALLBACK === 'true';
+
+type ApiInvoicePayload = {
+  id?: string;
+  amount?: number;
+  amountFiat?: number;
+  amountSats?: number;
+  amountSatsEstimate?: number;
+  amountUsd?: number;
+  description?: string;
+  status?: string;
+  lightningInvoice?: string;
+  paymentRequest?: string;
+  expiresAt?: string | number;
+  createdAt?: string | number;
+  merchantId?: string;
+  merchantName?: string;
+  items?: ApiInvoicePayload[];
+};
+
+function toInvoice(data: ApiInvoicePayload, fallback: Partial<Invoice> = {}): Invoice {
+  return {
+    id: data.id ?? fallback.id ?? '',
+    amount: data.amountFiat ?? data.amount ?? fallback.amount ?? 0,
+    amountSats: data.amountSatsEstimate ?? data.amountSats ?? fallback.amountSats ?? 0,
+    amountUsd: data.amountFiat ?? data.amountUsd ?? fallback.amountUsd ?? 0,
+    description: data.description ?? fallback.description ?? 'Merchant Payment',
+    status: (data.status?.toLowerCase() || fallback.status || 'pending') as PaymentStatus,
+    lightningInvoice: data.lightningInvoice ?? data.paymentRequest ?? fallback.lightningInvoice,
+    expiresAt: data.expiresAt ? new Date(data.expiresAt).getTime() : fallback.expiresAt,
+    createdAt: data.createdAt ? new Date(data.createdAt).getTime() : fallback.createdAt ?? Date.now(),
+    store: data.merchantName ?? data.merchantId ?? fallback.store,
+  };
+}
+
+function getStoredInvoice(id: string): Invoice | null {
+  try {
+    const stored = localStorage.getItem(`invoice_receipt_${id}`);
+    return stored ? (JSON.parse(stored) as Invoice) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistInvoice(invoice: Invoice): Invoice {
+  localStorage.setItem(`invoice_receipt_${invoice.id}`, JSON.stringify(invoice));
+  return invoice;
+}
+
+function updateStoredInvoiceStatus(invoiceId: string, status: PaymentStatus): void {
+  const stored = getStoredInvoice(invoiceId);
+  if (!stored) {
+    return;
+  }
+
+  persistInvoice({ ...stored, status });
+}
+
 export const paymentService = {
   createInvoice: async (amountSats: number, description: string, merchantId: string): Promise<Invoice> => {
     try {
@@ -10,24 +69,21 @@ export const paymentService = {
         merchantId,
         currency: 'BTC',
       });
-      
-      const newInvoice: Invoice = {
-        id: data.id,
-        amount: data.amount,
-        amountSats: data.amountSats || amountSats,
-        amountUsd: data.amountUsd || 0,
-        description: data.description || description,
-        status: data.status.toLowerCase() as any,
-        lightningInvoice: data.lightningInvoice || data.paymentRequest,
-        expiresAt: new Date(data.expiresAt).getTime(),
-        createdAt: new Date(data.createdAt).getTime(),
-        store: data.merchantId,
-      };
-      
-      localStorage.setItem(`invoice_receipt_${newInvoice.id}`, JSON.stringify(newInvoice));
-      return newInvoice;
+
+      return persistInvoice(
+        toInvoice(data, {
+          amountSats,
+          amountUsd: amountSats / 1587,
+          description,
+          store: merchantId,
+        }),
+      );
     } catch (error) {
-      console.warn('Backend payment creation failed, providing mock fallback for E2E testing:', error);
+      if (!DEMO_PAYMENT_FALLBACK_ENABLED) {
+        throw error;
+      }
+
+      console.warn('Backend payment creation failed, providing mock fallback for demo mode:', error);
       // Mock invoice for seamless testing
       const mockInvoice: Invoice = {
         id: `mock-inv-${Math.floor(Math.random() * 1000000)}`,
@@ -41,9 +97,8 @@ export const paymentService = {
         createdAt: Date.now(),
         store: merchantId,
       };
-      
-      localStorage.setItem(`invoice_receipt_${mockInvoice.id}`, JSON.stringify(mockInvoice));
-      return mockInvoice;
+
+      return persistInvoice(mockInvoice);
     }
   },
 
@@ -51,12 +106,15 @@ export const paymentService = {
     // Check local mocks first (for testing)
     const mockPaid = JSON.parse(localStorage.getItem('mock_paid_invoices') || '[]');
     if (mockPaid.includes(invoiceId)) {
+      updateStoredInvoiceStatus(invoiceId, 'paid');
       return 'paid';
     }
 
     try {
       const { data } = await apiClient.get(`/payments/${invoiceId}/status`);
-      return data.status.toLowerCase() as PaymentStatus;
+      const status = data.status.toLowerCase() as PaymentStatus;
+      updateStoredInvoiceStatus(invoiceId, status);
+      return status;
     } catch (error) {
       console.error('Failed to check payment status:', error);
       return 'pending';
@@ -68,6 +126,7 @@ export const paymentService = {
     if (!mockPaid.includes(invoiceId)) {
       localStorage.setItem('mock_paid_invoices', JSON.stringify([...mockPaid, invoiceId]));
     }
+    updateStoredInvoiceStatus(invoiceId, 'paid');
     // Trigger storage event to notify listeners (like PaymentsPage polling)
     window.dispatchEvent(new Event('storage'));
   },
@@ -91,19 +150,8 @@ export const paymentService = {
   getRecentPayments: async (): Promise<Invoice[]> => {
     try {
       const { data } = await apiClient.get('/payments');
-      const items = Array.isArray(data) ? data : (data?.items || []);
-      return items.map((data: any) => ({
-        id: data.id,
-        amount: data.amountFiat || data.amount || 0,
-        amountSats: data.amountSatsEstimate || data.amountSats || 0,
-        amountUsd: data.amountFiat || 0,
-        description: data.description || 'Merchant Payment',
-        status: (data.status?.toLowerCase() || 'pending') as any,
-        lightningInvoice: data.lightningInvoice,
-        expiresAt: new Date(data.expiresAt).getTime(),
-        createdAt: new Date(data.createdAt).getTime(),
-        store: data.merchantId,
-      }));
+      const items = Array.isArray(data) ? (data as ApiInvoicePayload[]) : ((data?.items || []) as ApiInvoicePayload[]);
+      return items.map((item) => toInvoice(item));
     } catch (error) {
       console.error('Failed to fetch recent payments:', error);
       return [];
@@ -111,26 +159,14 @@ export const paymentService = {
   },
 
   getInvoiceById: async (id: string): Promise<Invoice | null> => {
+    const storedInvoice = getStoredInvoice(id);
+
     try {
-      const stored = localStorage.getItem(`invoice_receipt_${id}`);
-      if (stored) return JSON.parse(stored);
-      
       const { data } = await apiClient.get(`/payments/${id}`);
-      return {
-        id: data.id,
-        amount: data.amountFiat || data.amount || 0,
-        amountSats: data.amountSatsEstimate || data.amountSats || 0,
-        amountUsd: data.amountFiat || 0,
-        description: data.description || 'Merchant Payment',
-        status: (data.status?.toLowerCase() || 'pending') as any,
-        lightningInvoice: data.lightningInvoice || data.paymentRequest,
-        expiresAt: new Date(data.expiresAt).getTime(),
-        createdAt: new Date(data.createdAt).getTime(),
-        store: data.merchantId,
-      };
+      return persistInvoice(toInvoice(data, storedInvoice ?? undefined));
     } catch (error) {
       console.error('Failed to get invoice by ID:', error);
-      return null;
+      return storedInvoice;
     }
   }
 };

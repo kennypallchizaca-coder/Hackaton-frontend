@@ -1,60 +1,104 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { paymentService } from './../api/paymentService';
 import { type Invoice } from '../../../types';
-import { CheckCircle2, Copy, Download, Zap, XCircle } from '../../../components/common/Icons';
+import { CheckCircle2, Copy, Download, ExternalLink, Zap, XCircle } from '../../../components/common/Icons';
+import { SEO } from '../../../components/common/SEO';
 import { cn } from '../../../utils/cn';
+import {
+  decodeInvoiceSnapshot,
+  decodeLegacyInvoiceHash,
+  mergeInvoices,
+} from '../utils/paymentLinks';
 
 export function InvoicePage() {
   const { id } = useParams<{ id: string }>();
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string>('');
+  const location = useLocation();
+  const snapshotInvoice = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return decodeInvoiceSnapshot(params.get('s')) ?? decodeLegacyInvoiceHash(location.hash);
+  }, [location.hash, location.search]);
+  const [invoice, setInvoice] = useState<Invoice | null>(() => snapshotInvoice);
+  const [loading, setLoading] = useState(() => Boolean(id) && !snapshotInvoice);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [shareNotice, setShareNotice] = useState('');
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const dataParam = hash.includes('#payload=') ? hash.split('#payload=')[1] : null;
+    let cancelled = false;
 
-    if (dataParam) {
-      try {
-        const decodedString = decodeURIComponent(atob(dataParam));
-        const decodedInvoice = JSON.parse(decodedString);
-        setInvoice(decodedInvoice);
-        setLoading(false);
-        return;
-      } catch (err: any) {
-        console.error('Invalid invoice data in URL', err);
-        setErrorMsg('Error descifrando el código QR: ' + err.message);
-      }
-    } else {
-      setErrorMsg('No fragment payload found in QR. Fallback to API/Cache block.');
+    if (!id) {
+      return () => {
+        cancelled = true;
+      };
     }
 
-    if (id) {
-      paymentService.getInvoiceById(id).then(data => {
-        setInvoice(data);
-        setLoading(false);
+    paymentService
+      .getInvoiceById(id)
+      .then((apiInvoice) => {
+        if (cancelled) {
+          return;
+        }
+
+        const resolved = mergeInvoices(apiInvoice, snapshotInvoice);
+        setInvoice(resolved);
+
+        if (!resolved) {
+          setErrorMsg('The receipt does not exist or is no longer available.');
+        } else {
+          setErrorMsg('');
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load invoice page', error);
+        if (!cancelled && !snapshotInvoice) {
+          setErrorMsg('We could not retrieve the invoice from the public API.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
-    } else {
-      setLoading(false);
-    }
-  }, [id]);
 
-  // Auto-trigger print when loaded from QR
-  useEffect(() => {
-    if (!loading && invoice) {
-      setTimeout(() => {
-        window.print();
-      }, 1000); // 1 sec delay to ensure styles are fully rendered
+    return () => {
+      cancelled = true;
+    };
+  }, [id, snapshotInvoice]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+
+    try {
+      if (canShare) {
+        await navigator.share({
+          title: `Factura ${invoice?.id ?? ''}`,
+          text: 'Factura generada por KuriPay',
+          url,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      setShareNotice('Enlace copiado al portapapeles');
+      window.setTimeout(() => setShareNotice(''), 2500);
+    } catch (error) {
+      console.error('Failed to share invoice', error);
+      setShareNotice('No se pudo compartir este enlace');
+      window.setTimeout(() => setShareNotice(''), 2500);
     }
-  }, [loading, invoice]);
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-brand-yellow border-t-transparent rounded-full animate-spin" />
-          <p>Cargando Factura...</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+        <div className="flex animate-pulse flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-yellow border-t-transparent" />
+          <p>Cargando factura...</p>
         </div>
       </div>
     );
@@ -62,140 +106,161 @@ export function InvoicePage() {
 
   if (!invoice) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-        <div className="text-center space-y-4 max-w-sm mx-auto p-6 bg-slate-900 rounded-2xl border border-slate-800">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
+        <div className="mx-auto max-w-sm space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center">
           <XCircle size={48} className="mx-auto text-binance-red" />
           <h1 className="text-2xl font-black text-slate-100">Factura no encontrada</h1>
-          <p className="text-slate-400 text-sm">El comprobante que buscas no existe o ha expirado.</p>
-          {errorMsg && <p className="text-red-400 text-xs mt-4 bg-red-900/20 p-2 rounded max-w-xs break-words border border-red-500/20">{errorMsg}</p>}
-          <Link to="/" className="inline-block mt-4 px-6 py-2 bg-brand-yellow text-slate-950 font-black rounded-lg hover:bg-brand-yellow/90">
-            Volver al Inicio
+          <p className="text-sm text-slate-400">El comprobante que buscas no existe o ya no esta disponible.</p>
+          {errorMsg && (
+            <p className="break-words rounded border border-red-500/20 bg-red-900/20 p-2 text-xs text-red-400">
+              {errorMsg}
+            </p>
+          )}
+          {!id && !errorMsg && (
+            <p className="break-words rounded border border-red-500/20 bg-red-900/20 p-2 text-xs text-red-400">
+              No invoice identifier was provided.
+            </p>
+          )}
+          <Link
+            to="/"
+            className="mt-4 inline-block rounded-lg bg-brand-yellow px-6 py-2 font-black text-slate-950 transition-colors hover:bg-brand-yellow/90"
+          >
+            Volver al inicio
           </Link>
         </div>
       </div>
     );
   }
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const isPaid = invoice.status === 'paid' || invoice.status === 'completed';
-  const subtotal = invoice.amountUsd || 0;
-  const tax = 0; // Crypto payments often don't have standard VAT calculated here, or are tax-inclusive
+  const subtotal = invoice.amountUsd || invoice.amount || 0;
+  const tax = 0;
   const total = subtotal + tax;
 
   return (
-    <div className="min-h-screen bg-slate-950 py-8 px-4 sm:p-8 flex justify-center text-slate-900 font-sans print:bg-white print:p-0">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-slate-950 px-4 py-8 font-sans text-slate-900 print:bg-white print:p-0 sm:px-6 sm:py-10">
+      <SEO
+        title={`Factura ${invoice.id.slice(0, 8).toUpperCase()}`}
+        description="Factura publica y compatible con moviles generada por KuriPay."
+        canonical={typeof window !== 'undefined' ? window.location.href : undefined}
+      />
 
-        {/* Action Bar - Hidden in Print */}
-        <div className="flex justify-between items-center mb-6 print:hidden">
-          <Link to="/" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-6 flex flex-col gap-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
+          <Link to="/" className="text-sm font-medium text-slate-400 transition-colors hover:text-white">
             &larr; Volver
           </Link>
-          <div className="flex gap-3">
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                alert("Enlace copiado al portapapeles");
-              }}
-              className="px-4 py-2 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors border border-slate-700"
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-700"
             >
-              <Copy size={16} /> Compartir Enlace
+              {canShare ? <ExternalLink size={16} /> : <Copy size={16} />}
+              Compartir enlace
             </button>
-            <button 
+            <button
+              type="button"
               onClick={handlePrint}
-              className="px-4 py-2 bg-brand-yellow text-binance-black hover:bg-yellow-400 rounded-lg text-sm font-black flex items-center gap-2 transition-colors shadow-[0_0_15px_rgba(252,213,53,0.3)]"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-yellow px-4 py-2 text-sm font-black text-binance-black shadow-[0_0_15px_rgba(252,213,53,0.3)] transition-colors hover:bg-yellow-400"
             >
               <Download size={16} /> Descargar PDF
             </button>
           </div>
         </div>
 
-        {/* Invoice Paper Document */}
-        <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-2xl print:shadow-none print:rounded-none mx-auto relative overflow-hidden">
-          
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b-2 border-slate-100 pb-8 mb-8">
+        {shareNotice && (
+          <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200 print:hidden">
+            {shareNotice}
+          </div>
+        )}
+
+        <div className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-2xl print:rounded-none print:shadow-none sm:p-10 lg:p-12">
+          <div className="mb-8 flex flex-col gap-6 border-b-2 border-slate-100 pb-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 bg-binance-black rounded-xl flex items-center justify-center shadow-lg">
-                  <Zap size={24} className="text-brand-yellow fill-current" />
+              <div className="mb-2 flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-binance-black shadow-lg">
+                  <Zap size={24} className="fill-current text-brand-yellow" />
                 </div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Kero</h1>
+                <h1 className="text-3xl font-black tracking-tight text-slate-900">Kero</h1>
               </div>
-              <p className="text-sm font-medium text-slate-500 uppercase tracking-widest mt-4">Comprobante de Pago Electrónico</p>
-              <p className="text-2xl font-black text-slate-800 mb-1 mt-1">Factura #{invoice.id.slice(0, 8).toUpperCase()}</p>
+              <p className="mt-4 text-sm font-medium uppercase tracking-[0.25em] text-slate-500">
+                Comprobante de pago electronico
+              </p>
+              <p className="mt-1 text-2xl font-black text-slate-800">
+                Factura #{invoice.id.slice(0, 8).toUpperCase()}
+              </p>
             </div>
 
-            <div className="text-left sm:text-right flex flex-col gap-1 items-start sm:items-end">
-               <div className={cn(
-                  "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm border",
-                  isPaid ? "bg-emerald-50 text-emerald-600 border-emerald-200" : 
-                           "bg-amber-50 text-amber-600 border-amber-200"
-               )}>
-                 {isPaid ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                 {isPaid ? "PAGADO" : "PENDIENTE"}
-               </div>
-               <p className="text-slate-500 text-sm font-medium mt-3">Fecha de Emisión</p>
-               <p className="text-slate-800 font-bold">{new Date(invoice.createdAt).toLocaleString()}</p>
+            <div className="flex flex-col items-start gap-1 sm:items-end sm:text-right">
+              <div
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-black uppercase tracking-widest shadow-sm',
+                  isPaid
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                    : 'border-amber-200 bg-amber-50 text-amber-600',
+                )}
+              >
+                {isPaid ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                {isPaid ? 'Pagado' : 'Pendiente'}
+              </div>
+              <p className="mt-3 text-sm font-medium text-slate-500">Fecha de emision</p>
+              <p className="font-bold text-slate-800">{new Date(invoice.createdAt).toLocaleString()}</p>
             </div>
           </div>
 
-          {/* Details Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8 pb-8 border-b-2 border-slate-100">
+          <div className="mb-8 grid grid-cols-1 gap-8 border-b-2 border-slate-100 pb-8 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Comerciante / Local</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Comerciante / Local</p>
               <p className="text-lg font-black text-slate-800">{invoice.store || 'Comercio Afiliado Kero'}</p>
-              <p className="text-sm text-slate-600 font-medium">ID Local: {invoice.store || 'N/A'}</p>
+              <p className="text-sm font-medium text-slate-600">ID Local: {invoice.store || 'N/A'}</p>
             </div>
             <div className="sm:text-right">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cliente / Autorizado a</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Cliente</p>
               <p className="text-lg font-black text-slate-800">Consumidor Final</p>
-              <p className="text-sm text-slate-600 font-medium">Pagado vía Lightning Network</p>
+              <p className="text-sm font-medium text-slate-600">Pagado via Lightning Network</p>
             </div>
           </div>
 
-          {/* Table / Items */}
           <div className="mb-8">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Productos / Servicios</p>
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Productos / Servicios</p>
             <div className="w-full">
-              <div className="flex justify-between border-b-2 border-slate-900 pb-3 mb-3 text-sm font-black text-slate-900">
-                <div className="flex-1">Descripción</div>
+              <div className="mb-3 flex justify-between border-b-2 border-slate-900 pb-3 text-sm font-black text-slate-900">
+                <div className="flex-1">Descripcion</div>
                 <div className="text-right">Total (USD)</div>
               </div>
-              <div className="flex justify-between py-3 text-slate-700 font-medium border-b border-slate-100 items-start gap-4">
-                <div className="flex-1 leading-relaxed">{invoice.description || 'Compra en establecimiento comercial'}</div>
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-3 font-medium text-slate-700">
+                <div className="flex-1 leading-relaxed">
+                  {invoice.description || 'Compra en establecimiento comercial'}
+                </div>
                 <div className="text-right font-bold text-slate-900">${subtotal.toFixed(2)}</div>
               </div>
             </div>
           </div>
 
-          {/* Summaries & Totals */}
-          <div className="flex flex-col sm:flex-row justify-between items-end gap-8 pt-4">
-            
-            {/* Payment Info */}
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 w-full sm:w-1/2">
-               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Información de Pago</p>
-               <div className="space-y-2">
-                 <div className="flex justify-between text-sm">
-                   <span className="text-slate-500 font-medium">Método</span>
-                   <span className="font-bold text-slate-800 flex items-center gap-1"><Zap size={14} className="text-brand-yellow fill-current" /> Bitcoin Lightning</span>
-                 </div>
-                 <div className="flex justify-between text-sm">
-                   <span className="text-slate-500 font-medium">Red</span>
-                   <span className="font-bold text-slate-800">Lightning Network</span>
-                 </div>
-                 <div className="flex justify-between text-sm">
-                   <span className="text-slate-500 font-medium">TxID (Ref)</span>
-                   <span className="font-mono text-xs font-bold text-slate-600 break-all">{invoice.id}</span>
-                 </div>
-               </div>
+          <div className="flex flex-col gap-8 pt-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:w-1/2">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Informacion de pago</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-slate-500">Metodo</span>
+                  <span className="flex items-center gap-1 font-bold text-slate-800">
+                    <Zap size={14} className="fill-current text-brand-yellow" /> Bitcoin Lightning
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-slate-500">Red</span>
+                  <span className="font-bold text-slate-800">Lightning Network</span>
+                </div>
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="font-medium text-slate-500">TxID (Ref)</span>
+                  <span className="break-all font-mono text-xs font-bold text-slate-600">{invoice.id}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Totals */}
-            <div className="w-full sm:w-1/3 min-w-[200px] space-y-3">
+            <div className="w-full min-w-[200px] space-y-3 sm:w-1/3">
               <div className="flex justify-between text-sm font-medium text-slate-500">
                 <span>Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
@@ -204,24 +269,29 @@ export function InvoicePage() {
                 <span>Impuestos (0%)</span>
                 <span>$0.00</span>
               </div>
-              <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
-                <span className="font-black text-slate-900 text-lg uppercase tracking-tight">Total USD</span>
+              <div className="mt-3 flex items-center justify-between border-t-2 border-slate-900 pt-3">
+                <span className="text-lg font-black uppercase tracking-tight text-slate-900">Total USD</span>
                 <span className="text-2xl font-black text-slate-900">${total.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-500">Monto SATS</span>
-                <span className="font-black text-brand-yellow bg-slate-900 px-2 py-0.5 rounded flex items-center gap-1"><Zap size={12} className="fill-current" /> {invoice.amountSats?.toLocaleString() || 0}</span>
+                <span className="flex items-center gap-1 rounded bg-slate-900 px-2 py-0.5 font-black text-brand-yellow">
+                  <Zap size={12} className="fill-current" /> {invoice.amountSats?.toLocaleString() || 0}
+                </span>
               </div>
             </div>
-            
           </div>
 
-          {/* Footer Note */}
-          <div className="mt-16 pt-8 border-t border-slate-100 text-center">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">¡Gracias por usar Kero!</p>
-            <p className="text-xs text-slate-500 font-medium">Documento generado automáticamente por el sistema de pagos.</p>
+          <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 print:hidden">
+            En movil, usa "Compartir enlace" para enviar la factura o "Descargar PDF" para abrir el dialogo nativo del navegador. No se fuerza la impresion al escanear para evitar errores en Safari y Chrome movil.
           </div>
 
+          <div className="mt-16 border-t border-slate-100 pt-8 text-center">
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Gracias por usar Kero</p>
+            <p className="text-xs font-medium text-slate-500">
+              Documento generado automaticamente por el sistema de pagos.
+            </p>
+          </div>
         </div>
       </div>
     </div>
