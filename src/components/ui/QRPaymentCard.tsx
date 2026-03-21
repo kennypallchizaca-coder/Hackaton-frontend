@@ -119,7 +119,16 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
               (status === 'paid' || status === 'completed')
-                ? `${window.location.origin}/invoice/${invoice.id}?data=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(invoice))))}`
+                ? `${window.location.origin}/invoice/${invoice.id}#payload=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({
+                    id: invoice.id,
+                    amount: invoice.amount,
+                    amountSats: invoice.amountSats,
+                    amountUsd: invoice.amountUsd,
+                    description: invoice.description,
+                    status: invoice.status,
+                    store: invoice.store,
+                    createdAt: invoice.createdAt
+                  }))))}`
                 : (invoice.lightningInvoice || '')
             )}&bgcolor=ffffff&color=020617&margin=1`}
             alt={status === 'paid' || status === 'completed' ? "Invoice QR Code" : "Payment QR Code"}
@@ -166,7 +175,16 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
       <div className="flex gap-4 w-full pt-2">
         {(status === 'paid' || status === 'completed') ? (
           <button
-            onClick={() => window.open(`/invoice/${invoice.id}?data=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(invoice))))}`, '_blank')}
+            onClick={() => window.open(`/invoice/${invoice.id}#payload=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({
+              id: invoice.id,
+              amount: invoice.amount,
+              amountSats: invoice.amountSats,
+              amountUsd: invoice.amountUsd,
+              description: invoice.description,
+              status: invoice.status,
+              store: invoice.store,
+              createdAt: invoice.createdAt
+            }))))}`, '_blank')}
             className="w-full flex items-center justify-center gap-3 py-4 bg-brand-yellow border border-brand-yellow rounded-xl hover:bg-yellow-400 active:scale-95 transition-all font-black text-sm text-binance-black shadow-md"
           >
             <CheckCircle2 size={18} /> VER FACTURA / PDF

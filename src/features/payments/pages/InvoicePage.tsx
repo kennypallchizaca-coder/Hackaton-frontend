@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { paymentService } from './../api/paymentService';
 import { type Invoice } from '../../../types';
 import { CheckCircle2, Copy, Download, Zap, XCircle } from '../../../components/common/Icons';
@@ -7,13 +7,14 @@ import { cn } from '../../../utils/cn';
 
 export function InvoicePage() {
   const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   useEffect(() => {
-    const dataParam = searchParams.get('data');
+    const hash = window.location.hash;
+    const dataParam = hash.includes('#payload=') ? hash.split('#payload=')[1] : null;
+
     if (dataParam) {
       try {
         const decodedString = decodeURIComponent(atob(dataParam));
@@ -26,7 +27,7 @@ export function InvoicePage() {
         setErrorMsg('Error descifrando el código QR: ' + err.message);
       }
     } else {
-      setErrorMsg('No payload found in QR code. Old version scanned?');
+      setErrorMsg('No fragment payload found in QR. Fallback to API/Cache block.');
     }
 
     if (id) {
