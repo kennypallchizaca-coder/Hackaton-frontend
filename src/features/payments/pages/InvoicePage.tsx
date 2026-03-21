@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { paymentService } from './../api/paymentService';
 import { type Invoice } from '../../../types';
 import { CheckCircle2, Copy, Download, Zap, XCircle } from '../../../components/common/Icons';
@@ -7,10 +7,23 @@ import { cn } from '../../../utils/cn';
 
 export function InvoicePage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const dataParam = searchParams.get('data');
+    if (dataParam) {
+      try {
+        const decoded = JSON.parse(atob(dataParam));
+        setInvoice(decoded);
+        setLoading(false);
+        return;
+      } catch (err) {
+        console.error('Invalid invoice data in URL', err);
+      }
+    }
+
     if (id) {
       paymentService.getInvoiceById(id).then(data => {
         setInvoice(data);
