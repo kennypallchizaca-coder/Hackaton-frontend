@@ -1,0 +1,22 @@
+/* Clean up App.css as Tailwind handles most styles */
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}

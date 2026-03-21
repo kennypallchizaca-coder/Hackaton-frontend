@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-light text-[#0A192F] font-inter antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-web3 {
+    @apply rounded-full bg-gradient-web3 text-bg-dark font-bold py-3 px-8 transition-all duration-300 hover:shadow-glow-gold hover:scale-105 active:scale-95;
+  }
+  
+  .btn-web3-outline {
+    @apply rounded-full border border-accent-gold/50 text-accent-gold font-bold py-3 px-8 transition-all duration-300 hover:bg-accent-gold/10;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-web3;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-card-light rounded-[16px] border border-gray-100 shadow-soft;
+  }
+  
+  .glass-glowing {
+    @apply bg-card-light rounded-[16px] border border-gray-100 shadow-soft relative overflow-hidden transition-shadow duration-300 hover:shadow-soft-hover;
+  }
+
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+}
