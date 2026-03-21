@@ -1,164 +1,140 @@
-import { Activity, Wallet, Bitcoin, Loader2, MessageSquare } from 'lucide-react';
-import { MetricCard } from '../components/ui/MetricCard';
-import { DataTable, type Column } from '../components/ui/DataTable';
-import { type Transaction } from '../data/mockTransactions';
-import { useTransactions } from '../hooks/useTransactions';
+import { useState } from 'react';
+import { OrderBook } from '../components/trading/OrderBook';
+import { TradingChart } from '../components/trading/TradingChart';
+import { TradePanel } from '../components/trading/TradePanel';
+import { MarketTrades } from '../components/trading/MarketTrades';
+import { cn } from '../utils/cn';
 
+// --- Mock Data ---
+function genBook(basePrice: number, count: number, dir: 1 | -1) {
+  return Array.from({ length: count }, (_, i) => {
+    const price = basePrice + dir * (i + 1) * 0.5;
+    const amount = Math.random() * 0.5 + 0.001;
+    return { price, amount, total: price * amount };
+  });
+}
+const ASKS = genBook(19965.74, 18, 1);
+const BIDS = genBook(19965.74, 18, -1);
+
+// --- Market Stats Sub-bar ---
+const STATS = [
+  { label: '24h Change', value: '-1,498.25  -6.98%', negative: true },
+  { label: '24h High', value: '21,491.86' },
+  { label: '24h Low', value: '19,549.09' },
+  { label: '24h Volume(BTC)', value: '715,559.40' },
+  { label: '24h Volume(USDT)', value: '14,430,472,197.94' },
+];
+
+const OPEN_ORDER_TABS = ['Open Orders(1)', 'Order History', 'Trade History', 'Funds'];
+
+// --- Dashboard Page ---
 export function Dashboard() {
-  const { data: transactions, isLoading } = useTransactions();
-  const recentTransactions = transactions.slice(0, 5); // Take 5 for the latest activities table
-
-  const columns: Column<Transaction>[] = [
-    {
-      header: 'Date',
-      accessorKey: 'date',
-      cell: (item) => <span className="text-gray-500 font-medium">{new Date(item.date).toLocaleString()}</span>
-    },
-    {
-      header: 'Detail',
-      accessorKey: 'store',
-      cell: (item) => <span className="font-bold text-bg-dark">{item.store} P2P Transfer</span>
-    },
-    {
-      header: 'Price',
-      accessorKey: 'amountBTC',
-      cell: (item) => <span className="font-bold text-accent-blue">{parseFloat(item.amountBTC) > 0 ? '+' : ''}{item.amountBTC} BTC</span>
-    }
-  ];
+  const [activeOrderTab, setActiveOrderTab] = useState('Open Orders(1)');
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 pt-6">
+    <div className="flex flex-col h-full bg-[#060E1E] overflow-hidden">
       
-      {/* Top Row: Metric Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          title="BTC" 
-          subTitle="Bitcoin"
-          value="¥ 721,882" 
-          trend={{ value: "-4.44%", isPositive: false }}
-          icon={<Bitcoin size={13} strokeWidth={2.5} />} 
-          color="#F7931A"
-        />
-        <MetricCard 
-          title="ETH" 
-          subTitle="Ethereum"
-          value="¥ 32,370" 
-          trend={{ value: "+0.45%", isPositive: true }}
-          icon={<Activity size={13} strokeWidth={2.5} />} 
-          color="#627EEA"
-        />
-        <MetricCard 
-          title="XLM" 
-          subTitle="Stellar"
-          value="¥ 10,604" 
-          trend={{ value: "-4.07%", isPositive: false }}
-          icon={<Wallet size={13} strokeWidth={2.5} />} 
-          color="#000000"
-        />
-        <MetricCard 
-          title="XRP" 
-          subTitle="Ripple"
-          value="¥ 50,839" 
-          trend={{ value: "+4.48%", isPositive: true }}
-          icon={<Activity size={13} strokeWidth={2.5} />} 
-          color="#23292F"
-        />
-      </section>
-
-      {/* Middle Row: Large Chart */}
-      <section className="glass p-6 min-h-[440px] flex flex-col">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-             <h2 className="text-xl font-bold text-bg-dark">BTC <span className="text-gray-400 text-sm font-medium ml-1">JPY v</span></h2>
-             <div className="flex items-center gap-6 ml-4">
-                <div className="text-sm">
-                   <span className="text-gray-400 mr-2">High</span>
-                   <span className="font-bold text-bg-dark">732,474</span>
-                </div>
-                <div className="text-sm">
-                   <span className="text-gray-400 mr-2">Low</span>
-                   <span className="font-bold text-bg-dark">708,806</span>
-                </div>
-                <div className="text-sm">
-                   <span className="text-gray-400 mr-2">24H Vol</span>
-                   <span className="font-bold text-bg-dark">871.7 BTC</span>
-                </div>
-             </div>
+      {/* Market Ticker/Stats Bar - matches Figma section 1:1648 */}
+      <div className="flex items-center px-3 py-1.5 border-b border-[#1a2d4a] bg-[#060E1E] flex-shrink-0 gap-4 overflow-x-auto no-scrollbar">
+        {/* Pair name & price */}
+        <div className="flex items-center gap-3 pr-4 border-r border-[#1a2d4a] shrink-0">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[15px] font-black text-[#EAECEF]">BTC/USDT</span>
+              <button className="text-[#6B8CAE] hover:text-[#EAECEF]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+            <span className="text-[10px] text-[#6B8CAE]">Bitcoin Price</span>
           </div>
-          <button className="bg-[#4CA5FF] text-white text-sm font-bold px-6 py-2 rounded-lg hover:bg-blue-500 transition-colors shadow-sm">
-             BUY
+          <div className="flex flex-col">
+            <span className="text-[15px] font-black text-[#F6465D]">19,965.74</span>
+            <span className="text-[10px] text-[#6B8CAE]">₦9,236,949.95</span>
+          </div>
+        </div>
+
+        {/* Stats */}
+        {STATS.map(s => (
+          <div key={s.label} className="flex flex-col shrink-0 min-w-[90px]">
+            <span className="text-[10px] text-[#6B8CAE]">{s.label}</span>
+            <span className={cn("text-[11px] font-medium", s.negative ? "text-[#F6465D]" : "text-[#EAECEF]")}>
+              {s.value}
+            </span>
+          </div>
+        ))}
+
+        <div className="ml-auto flex items-center gap-4 shrink-0">
+          <button className="text-[11px] text-[#6B8CAE] hover:text-[#FCD535] transition-colors flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Spot Tutorial
+          </button>
+          <button className="text-[11px] text-[#6B8CAE] hover:text-[#FCD535] transition-colors flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Spot Guidance
           </button>
         </div>
-        
-        {/* Fake Time Selectors */}
-        <div className="flex gap-6 border-b border-gray-100 pb-4 mb-4 text-sm font-bold text-gray-400">
-           <span className="hover:text-bg-dark cursor-pointer transition-colors">1 min</span>
-           <span className="hover:text-bg-dark cursor-pointer transition-colors">5 min</span>
-           <span className="hover:text-bg-dark cursor-pointer transition-colors">15 min</span>
-           <span className="hover:text-bg-dark cursor-pointer transition-colors">30 min</span>
-           <span className="text-accent-blue border-b-2 border-accent-blue pb-4 -mb-[18px]">1 Hr</span>
-           <span className="hover:text-bg-dark cursor-pointer transition-colors">1 Day</span>
+      </div>
+
+      {/* Main 3-column trading layout */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* LEFT: Order Book (320px) */}
+        <div className="w-[280px] xl:w-[320px] flex-shrink-0 border-r border-[#1a2d4a] flex flex-col overflow-hidden">
+          <OrderBook bids={BIDS} asks={ASKS} />
         </div>
 
-        {/* Chart Area */}
-        <div className="flex-1 flex items-center justify-center relative w-full overflow-hidden mt-4">
-           {/* Mock Grid Lines */}
-           <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:60px_40px]"></div>
-           <p className="text-gray-300 font-bold tracking-widest uppercase z-10 text-xl">Interactive Chart Layout Area</p>
-        </div>
-      </section>
-
-      {/* Bottom Row: Tables & News */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Latest Activities */}
-        <div className="lg:col-span-2 glass pt-6 pb-2">
-          <div className="px-6 flex justify-between items-center mb-4">
-             <h2 className="text-lg font-bold text-bg-dark flex items-center gap-2">
-                <Activity size={20} className="text-accent-blue" /> Latest Activities
-             </h2>
-             <select className="bg-transparent text-sm font-medium text-gray-500 outline-none cursor-pointer">
-                <option>ALL</option>
-                <option>BTC</option>
-                <option>ETH</option>
-             </select>
-          </div>
-          {isLoading ? (
-             <div className="flex justify-center py-12"><Loader2 className="animate-spin text-accent-gold" size={32} /></div>
-          ) : (
-             <DataTable data={recentTransactions} columns={columns} keyExtractor={(item) => item.id} />
-          )}
-        </div>
-
-        {/* Crypto Newsfeed */}
-        <div className="glass p-6 flex flex-col relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-             <h2 className="text-lg font-bold text-bg-dark flex items-center gap-2">
-                <MessageSquare size={20} className="text-[#0A192F]" /> Crypto Newsfeed
-             </h2>
-             <button className="text-xs font-bold text-gray-400 border border-gray-200 rounded px-2 py-1">View All</button>
+        {/* CENTER: Chart + Open Orders */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Chart takes most space */}
+          <div className="flex-1 overflow-hidden">
+            <TradingChart />
           </div>
 
-          <div className="space-y-6 flex-1 z-10">
-             <div className="cursor-pointer group">
-                <span className="text-xs font-bold text-gray-400 mb-1 block">Today 11:36</span>
-                <h3 className="text-sm font-bold text-bg-dark mb-1 group-hover:text-accent-blue transition-colors">Beyond Bad Trades: Cybersecurity Risks for Cryptocurrency Exchange Users</h3>
-                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">Cryptocurrency mining malware is not the only type of cryptocurrency related threat — cybercriminals have created...</p>
-             </div>
-             <div className="cursor-pointer group">
-                <span className="text-xs font-bold text-gray-400 mb-1 block">Yesterday</span>
-                <h3 className="text-sm font-bold text-bg-dark mb-1 group-hover:text-accent-blue transition-colors">Ripple News Today: Ripple is planning to upgrade the technology</h3>
-                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">While crypto markets sell off, Ripple remains committed to continuous development of its core technology...</p>
-             </div>
-          </div>
-          
-          {/* Decorative Corner vector */}
-          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-blue-50 rotate-12 -z-0"></div>
-          <div className="absolute bottom-4 right-4 bg-bg-dark text-white p-2 rounded-lg cursor-pointer shadow-soft hover:shadow-soft-hover transition-shadow z-10">
-             <MessageSquare size={20} />
+          {/* Open Orders tabs & table */}
+          <div className="flex-shrink-0 border-t border-[#1a2d4a]" style={{ height: '200px' }}>
+            <div className="flex border-b border-[#1a2d4a] px-4 gap-5 overflow-x-auto no-scrollbar">
+              {OPEN_ORDER_TABS.map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveOrderTab(tab)}
+                  className={cn(
+                    "py-2 text-[12px] font-medium whitespace-nowrap transition-colors border-b-2",
+                    activeOrderTab === tab
+                      ? "text-[#EAECEF] border-[#FCD535]"
+                      : "text-[#6B8CAE] border-transparent hover:text-[#EAECEF]"
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
+              {/* Empty State */}
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1a2d4a" strokeWidth="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <span className="text-[12px] text-[#6B8CAE]">No open orders</span>
+                <button className="text-[11px] text-[#FCD535] hover:opacity-80 transition-opacity">Place Order</button>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
+        {/* RIGHT: Trade Panel + Market Trades */}
+        <div className="w-[260px] xl:w-[300px] flex-shrink-0 border-l border-[#1a2d4a] flex flex-col overflow-hidden">
+          {/* Trade Panel - top ~60% */}
+          <div className="flex-1 border-b border-[#1a2d4a] overflow-hidden">
+            <TradePanel />
+          </div>
+          {/* Market Trades - bottom ~40% */}
+          <div className="h-[220px] flex-shrink-0 overflow-hidden">
+            <MarketTrades />
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

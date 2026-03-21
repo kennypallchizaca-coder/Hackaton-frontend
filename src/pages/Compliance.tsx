@@ -1,22 +1,33 @@
 import { useState, useEffect } from 'react';
-import { ShieldAlert, EyeOff, FileText, CheckCircle2, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, EyeOff, FileText, CheckCircle2, Loader2, Sparkles, History, Fingerprint, AlertTriangle } from '../components/Icons';
 import { type Transaction, type AuditEntry, type KYTAlert } from '../types';
 import { complianceService } from '../services/complianceService';
 import { RiskBadge } from '../components/ui/RiskBadge';
-import { AuditTimeline } from '../components/ui/AuditTimeline';
-import { Badge } from '../components/ui/Badge';
+import { cn } from '../utils/cn';
 
 type ComplianceTab = 'kyt' | 'poi' | 'audit';
 
+const TABS: { id: ComplianceTab; label: string }[] = [
+  { id: 'kyt', label: 'Safety · KYT' },
+  { id: 'poi', label: 'Proof of Innocence' },
+  { id: 'audit', label: 'Audit Trail' },
+];
+
+const RISK_COLOR: Record<string, string> = {
+  High: 'text-[#F6465D] bg-[#F6465D]/10',
+  Medium: 'text-[#FCD535] bg-[#FCD535]/10',
+  Low: 'text-[#0ECB81] bg-[#0ECB81]/10',
+};
+
 export function Compliance() {
-  const [atRiskTransactions, setAtRiskTransactions] = useState<Transaction[]>([]);
+  const [atRiskTxs, setAtRiskTxs] = useState<Transaction[]>([]);
   const [alerts, setAlerts] = useState<KYTAlert[]>([]);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ComplianceTab>('kyt');
   const [generating, setGenerating] = useState(false);
   const [generatedPayload, setGeneratedPayload] = useState<string | null>(null);
-  const [selectedTxId, setSelectedTxId] = useState<string>('tx_3a1b9c');
+  const [selectedTxId, setSelectedTxId] = useState('tx_3a1b9c');
 
   useEffect(() => {
     Promise.all([
@@ -24,7 +35,7 @@ export function Compliance() {
       complianceService.getAllAlerts(),
       complianceService.getAuditLog()
     ]).then(([txs, als, audit]) => {
-      setAtRiskTransactions(txs);
+      setAtRiskTxs(txs);
       setAlerts(als);
       setAuditLog(audit);
       setIsLoading(false);
@@ -39,196 +50,229 @@ export function Compliance() {
     setGenerating(false);
   };
 
-  const TABS: { id: ComplianceTab; label: string }[] = [
-    { id: 'kyt', label: 'KYT · Alertas' },
-    { id: 'poi', label: 'Proof of Innocence' },
-    { id: 'audit', label: 'Registro de Auditoría' },
-  ];
-
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-[#0A192F] flex items-center gap-3">
-          <ShieldAlert className="text-[#F4B41A]" size={28} />
-          Compliance &amp; Seguridad
-        </h1>
-        <p className="text-gray-500 mt-1">KYT, Proof of Innocence y Selective Disclosure para comercios regulados.</p>
+    <div className="min-h-full bg-[#060E1E] text-[#EAECEF]">
+      {/* Page Header - Binance style */}
+      <div className="border-b border-[#1a2d4a] px-5 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldAlert size={16} className="text-[#FCD535]" />
+          <h1 className="text-[14px] font-bold text-[#EAECEF]">Enterprise Compliance</h1>
+          <span className="text-[11px] text-[#6B8CAE]">— Automated KYT, Selective Disclosure & Proof of Innocence</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-[#6B8CAE]">Last sync:</span>
+          <span className="text-[10px] text-[#0ECB81] font-medium">Live</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#0ECB81] animate-pulse" />
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      {/* Tab Bar - Binance style */}
+      <div className="flex items-center gap-0 border-b border-[#1a2d4a] bg-[#060E1E] px-5">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-              activeTab === tab.id ? 'bg-white text-[#0A192F] shadow-sm' : 'text-gray-500 hover:text-[#0A192F]'
-            }`}
+            className={cn(
+              "px-4 py-3 text-[12px] font-medium transition-colors border-b-2 -mb-px uppercase tracking-wider",
+              activeTab === tab.id
+                ? "text-[#EAECEF] border-[#FCD535]"
+                : "text-[#6B8CAE] border-transparent hover:text-[#EAECEF]"
+            )}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* KYT TAB */}
-      {activeTab === 'kyt' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-4">
-            <h2 className="font-bold text-[#0A192F]">Transacciones Flaggeadas</h2>
-            {isLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#F4B41A]" size={28} /></div>
-            ) : (
-              <div className="space-y-3">
-                {atRiskTransactions.map(tx => (
-                  <div
-                    key={tx.id}
-                    onClick={() => setSelectedTxId(tx.id)}
-                    className={`glass p-5 cursor-pointer border transition-all hover:shadow-md ${
-                      selectedTxId === tx.id ? 'border-[#F4B41A] bg-amber-50/50' : 'border-transparent'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <p className="font-mono font-bold text-sm text-[#0A192F]">{tx.id}</p>
-                      <RiskBadge risk={tx.compliance!.kytRisk} />
+      <div className="p-5">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 size={24} className="animate-spin text-[#FCD535]" />
+            <span className="text-[12px] text-[#6B8CAE]">Synchronizing ledger states...</span>
+          </div>
+        ) : (
+          <>
+            {/* KYT Tab */}
+            {activeTab === 'kyt' && (
+              <div className="space-y-4">
+                {/* Stats row */}
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { label: 'Total Alerts', value: alerts.length, color: '#FCD535' },
+                    { label: 'High Risk', value: alerts.filter(a => a.riskLevel === 'High').length, color: '#F6465D' },
+                    { label: 'Medium Risk', value: alerts.filter(a => a.riskLevel === 'Medium').length, color: '#FCD535' },
+                    { label: 'Resolved', value: alerts.filter(a => a.resolved).length, color: '#0ECB81' },
+                  ].map(s => (
+                    <div key={s.label} className="bg-[#0D1F3C] border border-[#1a2d4a] rounded p-3">
+                      <div className="text-[11px] text-[#6B8CAE] mb-1">{s.label}</div>
+                      <div className="text-[20px] font-black" style={{ color: s.color }}>{s.value}</div>
                     </div>
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-xl font-black text-[#0A192F]">{tx.amountBTC} BTC</p>
-                        <p className="text-xs text-gray-500">{tx.amountUSD}</p>
-                      </div>
-                      <p className="text-xs text-gray-400">{tx.store}</p>
+                  ))}
+                </div>
+
+                {/* Two-column layout */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Flagged Transactions */}
+                  <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+                      <AlertTriangle size={13} className="text-[#F6465D]" />
+                      <span className="text-[12px] font-bold text-[#EAECEF]">Flagged Activities</span>
                     </div>
-                    {tx.compliance?.disputed && (
-                      <div className="mt-3 flex items-center gap-1.5 text-xs text-red-600 font-bold">
-                        <AlertTriangle size={12} /> En disputa — Ver GenLayer
+                    <div className="divide-y divide-[#1a2d4a]">
+                      {atRiskTxs.length === 0 ? (
+                        <div className="py-8 text-center text-[#6B8CAE] text-[12px]">No flagged activities</div>
+                      ) : atRiskTxs.map(tx => (
+                        <div key={tx.id} className="px-4 py-3 hover:bg-white/3 transition-colors">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-mono text-[11px] text-[#6B8CAE]">#{tx.id}</span>
+                            <RiskBadge risk={(tx.compliance?.kytRisk ?? 'Low') as 'Low' | 'Medium' | 'High'} />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[13px] font-bold text-[#EAECEF]">{tx.amountBTC} BTC</span>
+                            <span className="text-[11px] text-[#6B8CAE]">{tx.store}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Alert Feed */}
+                  <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+                      <ShieldAlert size={13} className="text-[#FCD535]" />
+                      <span className="text-[12px] font-bold text-[#EAECEF]">Detection Logs</span>
+                    </div>
+                    <div className="divide-y divide-[#1a2d4a]">
+                      {alerts.length === 0 ? (
+                        <div className="py-8 text-center text-[#6B8CAE] text-[12px]">No alerts</div>
+                      ) : alerts.map(alert => (
+                        <div key={alert.id} className={cn("px-4 py-3 hover:bg-white/3 transition-colors", alert.resolved ? 'opacity-50' : '')}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-mono text-[11px] text-[#6B8CAE]">#{alert.txId}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={cn("text-[9px] font-black uppercase px-1.5 py-0.5 rounded", RISK_COLOR[alert.riskLevel])}>
+                                {alert.riskLevel}
+                              </span>
+                              {alert.resolved && <CheckCircle2 size={11} className="text-[#0ECB81]" />}
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-[#EAECEF]">{alert.reason}</p>
+                          <p className="text-[10px] text-[#6B8CAE] mt-0.5 font-mono">{alert.walletAddress}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PoI Tab */}
+            {activeTab === 'poi' && (
+              <div className="grid grid-cols-2 gap-4">
+                {/* Generator */}
+                <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+                    <Fingerprint size={13} className="text-[#FCD535]" />
+                    <span className="text-[12px] font-bold text-[#EAECEF]">ZK-Proof Generator</span>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div>
+                      <label className="text-[11px] text-[#6B8CAE] block mb-1.5">Target Transaction ID</label>
+                      <select
+                        value={selectedTxId}
+                        onChange={e => setSelectedTxId(e.target.value)}
+                        className="w-full bg-[#060E1E] border border-[#1a2d4a] rounded px-3 py-2 text-[13px] text-[#EAECEF] outline-none focus:border-[#FCD535] transition-colors"
+                      >
+                        {atRiskTxs.map(tx => (
+                          <option key={tx.id} value={tx.id}>#{tx.id} — {tx.amountBTC} BTC</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-[11px]">
+                      {[
+                        { label: 'Status', value: 'KYC Verified', ok: true },
+                        { label: 'AML Score', value: '98/100', ok: true },
+                        { label: 'Hidden Fields', value: 'Name, DOB', ok: false },
+                        { label: 'Signature', value: 'RSA-4096', ok: true },
+                      ].map(item => (
+                        <div key={item.label} className="bg-[#060E1E] rounded p-2.5 border border-[#1a2d4a]">
+                          <div className="text-[#6B8CAE] mb-0.5">{item.label}</div>
+                          <div className={item.ok ? 'text-[#0ECB81] font-bold' : 'text-[#FCD535] font-bold'}>{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleGeneratePoI}
+                      disabled={generating}
+                      className="w-full py-2.5 bg-[#FCD535] text-[#060E1E] text-[12px] font-black rounded hover:bg-[#f0c90a] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {generating ? 'Generating Proof...' : 'Generate ZK-Proof'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Output */}
+                <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+                    <FileText size={13} className="text-[#6B8CAE]" />
+                    <span className="text-[12px] font-bold text-[#EAECEF]">Disclosure Payload</span>
+                  </div>
+                  <div className="p-4 h-[360px] overflow-auto no-scrollbar">
+                    {generatedPayload ? (
+                      <pre className="text-[10px] text-[#0ECB81] font-mono leading-relaxed whitespace-pre-wrap">{generatedPayload}</pre>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center gap-2 text-[#6B8CAE]">
+                        <EyeOff size={28} className="opacity-30" />
+                        <p className="text-[11px]">Generate a proof to reveal the payload</p>
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="font-bold text-[#0A192F]">Alertas KYT Activas</h2>
-            {isLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#F4B41A]" size={28} /></div>
-            ) : (
-              <div className="space-y-3">
-                {alerts.map(alert => (
-                  <div key={alert.id} className={`glass p-5 border ${alert.resolved ? 'border-emerald-100 bg-emerald-50/30' : 'border-red-100 bg-red-50/30'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                        <RiskBadge risk={alert.riskLevel} showLabel />
-                        <span className="font-mono text-xs text-gray-500">{alert.txId}</span>
-                      </div>
-                      {alert.resolved ? (
-                        <Badge variant="success">Resuelto</Badge>
-                      ) : (
-                        <Badge variant="error">Pendiente</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-700 font-medium mb-2">{alert.reason}</p>
-                    <div className="flex justify-between items-center">
-                      <p className="font-mono text-xs text-gray-400 truncate max-w-[200px]">{alert.walletAddress}</p>
-                      <p className="text-xs text-gray-400">{new Date(alert.detectedAt).toLocaleString('es-EC')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* PROOF OF INNOCENCE TAB */}
-      {activeTab === 'poi' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="glass p-8 relative">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-5">
-              <Sparkles size={28} className="text-[#F4B41A]" />
-            </div>
-            <h3 className="text-xl font-bold text-[#0A192F] mb-2">Selective Disclosure</h3>
-            <p className="text-gray-500 mb-6 text-sm leading-relaxed">
-              Genera una prueba criptográfica redactada de la legitimidad de tu negocio, sin exponer wallets de clientes a auditores o bancos adquirentes.
-            </p>
-
-            <div className="mb-5">
-              <label className="block text-sm font-bold text-gray-500 mb-2">ID de Transacción</label>
-              <select
-                value={selectedTxId}
-                onChange={(e) => setSelectedTxId(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-[#0A192F] font-mono text-sm focus:outline-none focus:border-[#F4B41A]"
-              >
-                {atRiskTransactions.map(tx => (
-                  <option key={tx.id} value={tx.id}>{tx.id} · {tx.amountBTC} BTC</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleGeneratePoI}
-                disabled={generating}
-                className="flex-1 flex justify-center items-center gap-2 py-3 bg-[#F4B41A] text-[#0A192F] font-bold rounded-xl hover:bg-[#FFC13B] disabled:opacity-50 transition-colors"
-              >
-                {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                Generar Prueba
-              </button>
-              <button className="flex-1 flex justify-center items-center gap-2 py-3 bg-gray-50 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-100 transition-colors">
-                <EyeOff size={16} /> Ocultar Datos
-              </button>
-            </div>
-
-            <div className="mt-5 flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-              <CheckCircle2 className="text-emerald-600 shrink-0" size={18} />
-              <p className="text-sm text-gray-600">
-                <strong className="text-[#0A192F]">Conforme:</strong> El payload satisface requerimientos del SRI Ecuador y principios de privacidad Web3.
-              </p>
-            </div>
-          </div>
-
-          <div className="glass p-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-[#0A192F]">Payload Generado</h3>
-              {generatedPayload && (
-                <button
-                  onClick={() => navigator.clipboard.writeText(generatedPayload)}
-                  className="text-xs font-bold text-[#F4B41A] border border-amber-200 px-3 py-1 rounded-lg hover:bg-amber-50"
-                >
-                  <FileText size={12} className="inline mr-1" />Exportar
-                </button>
-              )}
-            </div>
-            <div className="bg-[#0A192F] rounded-2xl p-5 font-mono text-xs text-emerald-400 min-h-[300px] overflow-y-auto whitespace-pre-wrap leading-relaxed">
-              {generating ? (
-                <div className="flex items-center gap-2 text-amber-400">
-                  <Loader2 size={14} className="animate-spin" /> Generando prueba criptográfica...
                 </div>
-              ) : generatedPayload ? (
-                generatedPayload
-              ) : (
-                <span className="text-gray-600">// Presiona "Generar Prueba" para crear el payload de Selective Disclosure...</span>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+              </div>
+            )}
 
-      {/* AUDIT LOG TAB */}
-      {activeTab === 'audit' && (
-        <div className="glass p-8 max-w-3xl">
-          <h2 className="font-bold text-[#0A192F] mb-6 flex items-center gap-2">
-            <ShieldAlert size={18} className="text-[#F4B41A]" />
-            Registro de Auditoría Trazable
-          </h2>
-          {isLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#F4B41A]" size={32} /></div>
-          ) : (
-            <AuditTimeline entries={auditLog} />
-          )}
-        </div>
-      )}
+            {/* Audit Trail Tab */}
+            {activeTab === 'audit' && (
+              <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+                  <History size={13} className="text-[#6B8CAE]" />
+                  <span className="text-[12px] font-bold text-[#EAECEF]">Immutable Audit Log</span>
+                  <span className="ml-auto text-[10px] text-[#6B8CAE]">{auditLog.length} entries</span>
+                </div>
+                {/* Table Header */}
+                <div className="grid grid-cols-5 px-4 py-2 text-[10px] text-[#6B8CAE] font-medium uppercase tracking-wider border-b border-[#1a2d4a]">
+                  <span>Timestamp</span>
+                  <span>Actor</span>
+                  <span>Action</span>
+                  <span>Result</span>
+                  <span>Metadata</span>
+                </div>
+                <div className="divide-y divide-[#1a2d4a]">
+                  {auditLog.length === 0 ? (
+                    <div className="py-12 text-center text-[#6B8CAE] text-[12px]">No audit entries</div>
+                  ) : auditLog.map(entry => (
+                    <div key={entry.id} className="grid grid-cols-5 px-4 py-2.5 text-[12px] hover:bg-white/3 transition-colors">
+                      <span className="text-[#6B8CAE] font-mono text-[10px]">{new Date(entry.timestamp).toLocaleString()}</span>
+                      <span className="text-[#EAECEF] font-medium">{entry.actor}</span>
+                      <span className="text-[#6B8CAE]">{entry.action}</span>
+                      <span className={cn("font-bold",
+                        entry.result === 'success' ? 'text-[#0ECB81]' :
+                        entry.result === 'warning' ? 'text-[#FCD535]' : 'text-[#F6465D]'
+                      )}>
+                        {entry.result.toUpperCase()}
+                      </span>
+                      <span className="text-[#6B8CAE] text-[10px] font-mono truncate">
+                        {JSON.stringify(entry.metadata).slice(0, 40)}...
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

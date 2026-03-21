@@ -1,139 +1,206 @@
 import { useState } from 'react';
-import { Cpu, Gavel, FileCheck, Loader2 } from 'lucide-react';
+import { Cpu, Loader2, CheckCircle2, Terminal } from '../components/Icons';
 import { mockTransactions } from '../data/mockTransactions';
+import { cn } from '../utils/cn';
+
+const AGENT_STEPS = [
+  { prefix: '[SYSTEM]', msg: 'Initializing GenLayer Virtual Arbitrator v2.1...' },
+  { prefix: '[FETCH]', msg: 'Consensus Node retrieving transaction data...' },
+  { prefix: '[AGENT: RISK]', msg: 'Analyzing velocity pattern for target node...' },
+  { prefix: '[AGENT: RISK]', msg: "Found high correlation with peer 'Web Store' node." },
+  { prefix: '[AGENT: KYT]', msg: 'Pulling ZK-Proof from Merchant Vault...' },
+  { prefix: '[AGENT: KYT]', msg: 'CALIBRATION: Proof verified. 98% delivery confidence.' },
+  { prefix: '[AGENT: RISK]', msg: 'Scanning global dark-market activity logs...' },
+  { prefix: '[AGENT: RISK]', msg: 'CLEAN: No malicious peer engagement detected.' },
+  { prefix: '[GOVERNANCE]', msg: 'Multi-Agent Consensus Threshold Reached (100%).' },
+  { prefix: '[EXECUTOR]', msg: 'Triggering releaseFunds(0.0018_BTC).' },
+  { prefix: '[SYSTEM]', msg: 'Smart Contract execution successful. Dispute cleared.' },
+];
+
+const PREFIX_COLORS: Record<string, string> = {
+  '[SYSTEM]': 'text-[#6B8CAE]',
+  '[FETCH]': 'text-[#FCD535]',
+  '[AGENT: RISK]': 'text-[#F6465D]',
+  '[AGENT: KYT]': 'text-[#0ECB81]',
+  '[GOVERNANCE]': 'text-[#9B59B6]',
+  '[EXECUTOR]': 'text-[#3498DB]',
+};
+
+const NETWORK_NODES = [
+  { id: 'N-001', type: 'Validator', latency: '12ms', stake: '100 BTC', status: 'active' },
+  { id: 'N-002', type: 'Consensus', latency: '8ms', stake: '250 BTC', status: 'active' },
+  { id: 'N-003', type: 'Risk Agent', latency: '23ms', stake: '75 BTC', status: 'active' },
+  { id: 'N-004', type: 'KYT Oracle', latency: '15ms', stake: '120 BTC', status: 'active' },
+  { id: 'N-005', type: 'Arbitrator', latency: '9ms', stake: '500 BTC', status: 'standby' },
+];
 
 export function GenLayer() {
   const [logs, setLogs] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
-  const [resolutionStatus, setResolutionStatus] = useState<'idle' | 'resolving' | 'resolved'>('idle');
+  const [status, setStatus] = useState<'idle' | 'resolving' | 'resolved'>('idle');
   const disputedTx = mockTransactions.find(t => t.compliance?.disputed);
 
-  const startDemoResolution = () => {
+  const startResolution = () => {
     setIsResolving(true);
-    setResolutionStatus('resolving');
+    setStatus('resolving');
     setLogs([]);
-    
-    const steps = [
-      "[SYSTEM] Initializing GenLayer Smart Contract Arbitrator...",
-      "[AGENT A - RISK] Retrieving transaction tx_3a1b9c...",
-      "[AGENT A - RISK] Flag detected: Unusual volume for 'Web Store' node.",
-      "[AGENT B - KYT] Extracting Zero-Knowledge Proof from Merchant Profile...",
-      "[AGENT B - KYT] Proof verified. Merchant has 98% positive delivery record.",
-      "[AGENT A - RISK] Correlating with on-chain wallet history...",
-      "[AGENT A - RISK] No dark-market interaction found. Activity is clean.",
-      "[SYSTEM] Multi-Agent Consensus Reached.",
-      "[CONTRACT] Executing function: releaseFunds(merchant_id).",
-      "[SYSTEM] Disbursement successful. Disputed status cleared."
-    ];
-
-    let currentStep = 0;
+    let i = 0;
     const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        setLogs(prev => [...prev, steps[currentStep]]);
-        currentStep++;
+      if (i < AGENT_STEPS.length) {
+        const step = AGENT_STEPS[i];
+        setLogs(prev => [...prev, `${step.prefix} ${step.msg}`]);
+        i++;
       } else {
         clearInterval(interval);
         setIsResolving(false);
-        setResolutionStatus('resolved');
+        setStatus('resolved');
       }
-    }, 1200); // 1.2s per log for dramatic effect
+    }, 600);
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto relative pt-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 w-full">
-         <div>
-           <h1 className="text-4xl sm:text-5xl font-black mb-2 flex items-center gap-3 tracking-tighter">
-              <Cpu className="text-accent-gold" size={40} /> 
-              GenLayer <span className="text-bg-dark">Dispute Resolution</span>
-           </h1>
-           <p className="text-gray-500 text-lg">AI-driven Smart Contracts to automatically parse compliance rules and resolve frozen transactions.</p>
-         </div>
-         {resolutionStatus === 'idle' && (
-           <button 
-             onClick={startDemoResolution}
-             className="btn-web3 flex items-center gap-2"
-           >
-              <Gavel size={20} /> Initiate AI Arbitration
-           </button>
-         )}
+    <div className="min-h-full bg-[#060E1E] text-[#EAECEF]">
+      {/* Page Header */}
+      <div className="border-b border-[#1a2d4a] px-5 py-3 flex items-center gap-2">
+        <Cpu size={14} className="text-[#FCD535]" />
+        <h1 className="text-[14px] font-bold text-[#EAECEF]">GenLayer AI Consensus</h1>
+        <span className="text-[11px] text-[#6B8CAE]">— Multi-agent dispute resolution & smart contract execution</span>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#0ECB81] animate-pulse" />
+          <span className="text-[10px] text-[#0ECB81] font-medium">Network Online</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        
-        {/* Transaction Focus View */}
-        <div className="space-y-6">
-           <h2 className="text-xl font-bold tracking-tight">Target: Disputed Output</h2>
-           <div className={`glass p-8 ${resolutionStatus === 'resolved' ? 'border-green-200 bg-green-50 shadow-sm' : 'border-red-100 bg-red-50 shadow-sm'} transition-all duration-1000`}>
-              <div className="flex justify-between items-center mb-6">
-                 <p className="text-lg font-bold text-bg-dark">TX: {disputedTx?.id}</p>
-                 <span className={`px-4 py-1.5 text-xs font-bold uppercase rounded-full border ${resolutionStatus === 'resolved' ? 'bg-[#00C853]/15 text-[#00C853] border-transparent' : 'bg-accent-red/10 text-accent-red border-transparent'}`}>
-                    {resolutionStatus === 'resolved' ? 'CLEARED' : 'FROZEN'}
-                 </span>
+      <div className="p-5 grid grid-cols-3 gap-4">
+        {/* Left: Network Status */}
+        <div className="col-span-1 flex flex-col gap-4">
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Active Nodes', value: '4', color: '#0ECB81' },
+              { label: 'Consensus %', value: '100%', color: '#FCD535' },
+              { label: 'Avg Latency', value: '13ms', color: '#EAECEF' },
+              { label: 'Total Stake', value: '1,045 BTC', color: '#EAECEF' },
+            ].map(s => (
+              <div key={s.label} className="bg-[#0D1F3C] border border-[#1a2d4a] rounded p-3">
+                <div className="text-[10px] text-[#6B8CAE] mb-0.5">{s.label}</div>
+                <div className="text-[14px] font-black" style={{ color: s.color }}>{s.value}</div>
               </div>
-              <div className="space-y-4 mb-8">
-                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                    <span className="text-gray-500 font-medium">Amount Held</span>
-                    <span className="text-bg-dark font-bold">{disputedTx?.amountBTC} BTC</span>
-                 </div>
-                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                    <span className="text-gray-500 font-medium">Reason</span>
-                    <span className="text-bg-dark font-medium">KYT High Risk Flag</span>
-                 </div>
-                 <div className="flex justify-between pb-2">
-                    <span className="text-gray-500 font-medium">Merchant Node</span>
-                    <span className="text-bg-dark font-medium">{disputedTx?.store}</span>
-                 </div>
+            ))}
+          </div>
+
+          {/* Network Nodes Table */}
+          <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden flex-1">
+            <div className="px-4 py-2.5 border-b border-[#1a2d4a]">
+              <span className="text-[12px] font-bold text-[#EAECEF]">Network Nodes</span>
+            </div>
+            <div className="divide-y divide-[#1a2d4a]">
+              {NETWORK_NODES.map(node => (
+                <div key={node.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-white/3 transition-colors">
+                  <div className={cn("w-2 h-2 rounded-full shrink-0", node.status === 'active' ? 'bg-[#0ECB81]' : 'bg-[#6B8CAE]')} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-bold text-[#EAECEF]">{node.id} · {node.type}</div>
+                    <div className="text-[10px] text-[#6B8CAE]">{node.latency} · {node.stake} staked</div>
+                  </div>
+                  <span className={cn("text-[9px] uppercase font-black px-1.5 py-0.5 rounded",
+                    node.status === 'active' ? 'text-[#0ECB81] bg-[#0ECB81]/10' : 'text-[#6B8CAE] bg-[#6B8CAE]/10'
+                  )}>
+                    {node.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Center + Right: Dispute Panel + Terminal */}
+        <div className="col-span-2 flex flex-col gap-4">
+          {/* Disputed Transaction */}
+          {disputedTx ? (
+            <div className="bg-[#0D1F3C] border border-[#F6465D]/30 rounded overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#F6465D] animate-pulse" />
+                <span className="text-[12px] font-bold text-[#F6465D]">Active Dispute</span>
+                <span className="text-[11px] text-[#6B8CAE]">— Awaiting multi-agent consensus</span>
               </div>
-              
-              {resolutionStatus === 'resolved' && (
-                 <div className="flex items-center gap-4 p-4 bg-[#00C853]/10 border border-[#00C853]/20 rounded-xl text-[#00C853] animate-fade-in">
-                    <FileCheck size={24} />
-                    <p className="font-bold text-sm">Funds Released to Merchant.</p>
-                 </div>
+              <div className="p-4 grid grid-cols-4 gap-4">
+                {[
+                  { label: 'Transaction ID', value: `#${disputedTx.id}`, mono: true },
+                  { label: 'Amount', value: `${disputedTx.amountBTC} BTC`, color: '#FCD535' },
+                  { label: 'Merchant', value: disputedTx.store },
+                  { label: 'Status', value: 'DISPUTED', color: '#F6465D' },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div className="text-[10px] text-[#6B8CAE] mb-1">{item.label}</div>
+                    <div className={cn("text-[13px] font-bold", item.mono ? 'font-mono text-[#6B8CAE]' : 'text-[#EAECEF]')}
+                      style={item.color ? { color: item.color } : {}}>
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-4 pb-3 flex items-center gap-3">
+                <button
+                  onClick={startResolution}
+                  disabled={isResolving || status === 'resolved'}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded text-[12px] font-bold transition-colors",
+                    status === 'resolved'
+                      ? 'bg-[#0ECB81]/20 text-[#0ECB81] border border-[#0ECB81]/30 cursor-default'
+                      : 'bg-[#FCD535] text-[#060E1E] hover:bg-[#f0c90a] disabled:opacity-50'
+                  )}
+                >
+                  {isResolving ? <Loader2 size={14} className="animate-spin" /> :
+                   status === 'resolved' ? <CheckCircle2 size={14} /> :
+                   <Cpu size={14} />}
+                  {isResolving ? 'Resolving...' : status === 'resolved' ? 'Resolved' : 'Start AI Resolution'}
+                </button>
+                {status === 'resolved' && (
+                  <span className="text-[11px] text-[#0ECB81]">Funds released successfully</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded p-4 text-center text-[#6B8CAE] text-[12px]">
+              No active disputes
+            </div>
+          )}
+
+          {/* Terminal Output */}
+          <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded overflow-hidden flex-1">
+            <div className="px-4 py-2.5 border-b border-[#1a2d4a] flex items-center gap-2">
+              <Terminal size={13} className="text-[#FCD535]" />
+              <span className="text-[12px] font-bold text-[#EAECEF]">Agent Output</span>
+              <span className="font-mono text-[10px] text-[#6B8CAE] ml-auto">v2.1.0 / GenLayer Runtime</span>
+            </div>
+            <div className="p-4 font-mono text-[11px] space-y-1 min-h-[200px] max-h-[340px] overflow-y-auto no-scrollbar bg-[#060E1E]">
+              {logs.length === 0 ? (
+                <div className="text-[#3D4D5C] flex items-center gap-2">
+                  <span className="text-[#FCD535]">$</span>
+                  <span className="animate-pulse">_</span>
+                  <span>Awaiting resolution trigger...</span>
+                </div>
+              ) : (
+                logs.map((log, i) => {
+                  const prefix = Object.keys(PREFIX_COLORS).find(k => log.startsWith(k)) ?? '';
+                  const rest = log.slice(prefix.length);
+                  return (
+                    <div key={i} className="leading-relaxed">
+                      <span className={PREFIX_COLORS[prefix] ?? 'text-[#EAECEF]'}>{prefix}</span>
+                      <span className="text-[#EAECEF]">{rest}</span>
+                    </div>
+                  );
+                })
               )}
-           </div>
+              {isResolving && (
+                <div className="text-[#FCD535] flex items-center gap-1">
+                  <span>$</span>
+                  <span className="animate-pulse">█</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-
-        {/* Console / Log Terminal */}
-        <div className="space-y-6">
-           <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight">Agents Consensus Terminal</h2>
-              {isResolving && <Loader2 size={20} className="text-accent-gold animate-spin" />}
-           </div>
-           
-           <div className="bg-[#0A192F] rounded-2xl p-6 h-[400px] overflow-y-auto font-mono text-sm relative shadow-soft">
-              <div className="absolute top-0 right-0 p-4">
-                 <div className="flex gap-2">
-                    <div className="w-3 h-3 rounded-full bg-status-red/50"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                    <div className="w-3 h-3 rounded-full bg-status-blue/50"></div>
-                 </div>
-              </div>
-              
-              <div className="pt-6 space-y-3">
-                 {logs.length === 0 && resolutionStatus === 'idle' && (
-                    <p className="text-text-gray/50 italic">Waiting for execution trigger...</p>
-                 )}
-                 {logs.map((log, i) => (
-                    <p 
-                      key={i} 
-                      className={`animate-fade-in-up ${
-                          log.includes('SYSTEM') ? 'text-accent-gold' : 
-                          log.includes('RISK') ? 'text-status-red' : 
-                          log.includes('KYT') ? 'text-status-blue' : 
-                          log.includes('CONTRACT') ? 'text-green-400 font-bold' : 
-                          'text-text-smoke'
-                      }`}
-                    >
-                      {log}
-                    </p>
-                 ))}
-                 <div className="h-4"></div> {/* Spacer for scroll */}
-              </div>
-           </div>
-        </div>
-
       </div>
     </div>
   );

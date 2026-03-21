@@ -1,28 +1,27 @@
-import { mockTransactions } from '../data/mockTransactions';
+// import api from './api';
 import { type Transaction } from '../types';
+import { mockTransactions } from '../data/mockTransactions';
 
 export const transactionService = {
-  getAll: (): Promise<Transaction[]> => {
+  getAll: async (): Promise<Transaction[]> => {
+    // PREPARED FOR BACKEND: const response = await api.get<Transaction[]>('/transactions');
+    // return response.data;
     return new Promise((resolve) => {
-      setTimeout(() => resolve(mockTransactions), 600);
+      setTimeout(() => resolve(mockTransactions as Transaction[]), 400);
     });
   },
 
-  getById: (id: string): Promise<Transaction | undefined> => {
+  getById: async (id: string): Promise<Transaction | undefined> => {
+    // PREPARED FOR BACKEND: const response = await api.get<Transaction>(`/transactions/${id}`);
+    // return response.data;
     return new Promise((resolve) => {
-      setTimeout(() => resolve(mockTransactions.find(t => t.id === id)), 300);
+      setTimeout(() => resolve((mockTransactions as Transaction[]).find(t => t.id === id)), 200);
     });
   },
 
-  getByStore: (store: string): Promise<Transaction[]> => {
+  getByStore: async (store: string): Promise<Transaction[]> => {
     return new Promise((resolve) => {
-      setTimeout(() => resolve(mockTransactions.filter(t => t.store === store)), 400);
-    });
-  },
-
-  getByStatus: (status: Transaction['status']): Promise<Transaction[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockTransactions.filter(t => t.status === status)), 400);
+      setTimeout(() => resolve((mockTransactions as Transaction[]).filter(t => t.store === store)), 300);
     });
   }
 };

@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle } from '../Icons';
 import { type AuditEntry } from '../../types';
 
 interface AuditTimelineProps {

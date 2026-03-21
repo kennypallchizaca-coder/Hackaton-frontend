@@ -23,6 +23,8 @@ export function AppRoutes() {
           <Route path="stores" element={<Stores />} />
           <Route path="compliance" element={<Compliance />} />
           <Route path="genlayer" element={<GenLayer />} />
+          {/* Fixed: analytics route now correctly maps to AIInsights */}
+          <Route path="analytics" element={<AIInsights />} />
           <Route path="ai-insights" element={<AIInsights />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />

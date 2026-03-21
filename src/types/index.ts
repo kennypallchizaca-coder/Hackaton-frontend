@@ -1,57 +1,74 @@
-// ──────────────────────────────────────────────
-// CORE DOMAIN TYPES
-// ──────────────────────────────────────────────
+/**
+ * Comprehensive Type Definitions for KuriPay Frontend
+ * Aligned with the NestJS Backend DTOs and existing UI components
+ */
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired';
-export type PaymentNetwork = 'Lightning' | 'On-Chain';
-export type RiskLevel = 'Low' | 'Medium' | 'High';
-export type TxStatus = 'completed' | 'pending' | 'expired' | 'failed';
+export type UserRole = 'admin' | 'merchant_owner' | 'cashier' | 'auditor';
 
-// ──────────────────────────────────────────────
-// TRANSACTION
-// ──────────────────────────────────────────────
-
-export interface ComplianceInfo {
-  kytRisk: RiskLevel;
-  disputed: boolean;
-  proofOfInnocence?: boolean;
-  selectiveDisclosed?: boolean;
-  auditHash?: string;
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  merchantId?: string;
+  status: 'active' | 'inactive';
+  avatarUrl?: string;
+  createdAt: string;
 }
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+export interface Merchant {
+  id: string;
+  name: string;
+  country: string;
+  taxId: string;
+  status: 'active' | 'pending' | 'suspended';
+}
+
+export interface Branch {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export interface PaymentOrder {
+  id: string;
+  amount: number;
+  amountSats?: number; // Added back for compatibility
+  amountUsd?: number;
+  description?: string;
+  status: 'pending' | 'completed' | 'expired' | 'failed' | 'paid';
+  lightningInvoice?: string;
+  qrCode?: string;
+  store?: string;
+  createdAt: number | string;
+  expiresAt?: number;
+}
+
+export type Invoice = PaymentOrder;
+export type PaymentStatus = PaymentOrder['status'];
 
 export interface Transaction {
   id: string;
-  amountBTC: string;
-  amountSats: number;
-  amountUSD: string;
-  status: TxStatus;
   date: string;
   store: string;
-  network: PaymentNetwork;
-  paymentHash?: string;
-  invoiceRef?: string;
-  compliance?: ComplianceInfo;
-}
-
-// ──────────────────────────────────────────────
-// POS / INVOICE
-// ──────────────────────────────────────────────
-
-export interface Invoice {
-  id: string;
-  amountSats: number;
+  amountBTC: string;
   amountUSD: number;
-  description: string;
-  status: PaymentStatus;
-  lightningInvoice: string;
-  expiresAt: number; // unix timestamp
-  createdAt: number;
-  store: string;
+  status: 'completed' | 'processing' | 'failed' | 'success'; 
+  network?: string; // Added for Transactions.tsx
+  compliance?: {
+    kytRisk: 'Low' | 'Medium' | 'High';
+    score: number;
+    disputed?: boolean; // Added for Compliance.tsx
+  };
 }
 
-// ──────────────────────────────────────────────
-// COMPLIANCE / KYT
-// ──────────────────────────────────────────────
+export type RiskLevel = 'Low' | 'Medium' | 'High';
 
 export interface KYTAlert {
   id: string;
@@ -66,10 +83,10 @@ export interface KYTAlert {
 export interface AuditEntry {
   id: string;
   timestamp: string;
-  actor: string; // e.g. "System" | "Admin" | "AI Agent"
+  actor: string;
   action: string;
   result: 'success' | 'warning' | 'error';
-  metadata?: Record<string, string>;
+  metadata: Record<string, any>;
 }
 
 export interface SelectiveDisclosurePayload {
@@ -83,105 +100,46 @@ export interface SelectiveDisclosurePayload {
   timestamp: string;
 }
 
-// ──────────────────────────────────────────────
-// GENLAYER
-// ──────────────────────────────────────────────
-
-export type AgentRole = 'RISK' | 'KYT' | 'SYSTEM' | 'CONTRACT';
-
-export interface AgentLogEntry {
-  agent: AgentRole;
-  message: string;
-  timestamp: string;
-}
-
-export interface DisputeCase {
-  id: string;
-  txId: string;
-  status: 'frozen' | 'resolved' | 'under_review';
-  heldAmountBTC: string;
-  reason: string;
-  merchantNode: string;
-  merchantReputation: number; // 0-100
-  createdAt: string;
-  resolvedAt?: string;
-  agentLogs: AgentLogEntry[];
-}
-
-// ──────────────────────────────────────────────
-// AI INSIGHTS
-// ──────────────────────────────────────────────
-
 export interface AIInsight {
   id: string;
   type: 'summary' | 'anomaly' | 'recommendation';
   title: string;
-  body: string;
-  priority: 'low' | 'medium' | 'high';
-  generatedAt: string;
-  icon?: string;
+  content: string;
+  timestamp: string;
+  impact?: 'positive' | 'negative' | 'neutral';
+  icon?: string; // Added back for InsightCard
 }
 
 export interface DailySummary {
   date: string;
-  totalRevenueBTC: string;
-  totalRevenueUSD: string;
-  totalTransactions: number;
-  successRate: number;
-  avgTicketUSD: number;
-  topStore: string;
-  insights: AIInsight[];
+  totalVolume: number;
+  transactionCount: number;
+  topBranch: string;
+  // Added back for AIInsights.tsx compatibility
+  totalTransactions?: number;
+  successRate?: number;
+  avgTicketUSD?: number;
 }
 
-// ──────────────────────────────────────────────
-// STORE / MERCHANT
-// ──────────────────────────────────────────────
+export interface DashboardMetrics {
+  totalBalance: number;
+  dailyVolume: number;
+  activeTerminals: number;
+  pendingAlerts: number;
+}
 
-export interface Store {
+export interface ComplianceCheck {
   id: string;
-  name: string;
-  city: string;
-  province: string;
-  ruc: string; // Ecuador tax ID
-  status: 'active' | 'suspended' | 'pending';
-  btcAddress: string;
-  lightningNode?: string;
-  totalRevenueBTC: string;
-  transactionsCount: number;
+  paymentOrderId: string;
+  riskScore: number;
+  status: 'clear' | 'flagged' | 'blocked';
+  kytProvider: string;
+  evidenceUrl?: string;
   createdAt: string;
 }
 
-// ──────────────────────────────────────────────
-// AUTH
-// ──────────────────────────────────────────────
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'cashier' | 'viewer';
-  merchantId: string;
-  avatarUrl?: string;
-}
-
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
-
-// ──────────────────────────────────────────────
-// DASHBOARD METRICS
-// ──────────────────────────────────────────────
-
-export interface DashboardMetrics {
-  totalRevenueTodayBTC: string;
-  totalRevenueTodayUSD: string;
-  totalTransactionsToday: number;
-  successfulToday: number;
-  failedToday: number;
-  avgTicketUSD: number;
-  activeAlerts: number;
-  btcPriceUSD: number;
-  btcChange24h: number;
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
 }

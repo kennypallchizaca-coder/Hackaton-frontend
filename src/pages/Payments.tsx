@@ -1,234 +1,231 @@
-import { useState, useCallback } from 'react';
-import { Zap, Bitcoin, Store, ChevronRight, CheckCircle2, ReceiptText } from 'lucide-react';
+import { useState } from 'react';
+import { Zap, CheckCircle2, ReceiptText } from '../components/Icons';
 import { QRPaymentCard } from '../components/ui/QRPaymentCard';
 import { paymentService } from '../services/paymentService';
 import { type Invoice } from '../types';
+import { cn } from '../utils/cn';
 
 type Step = 'form' | 'qr' | 'receipt';
 type CurrencyMode = 'SATS' | 'USD' | 'BTC';
 
 const STORES = ['Café Central', 'Tienda Online', 'Sucursal Norte'];
-const BTC_PRICE = 63012.50;
+const CURRENCIES: CurrencyMode[] = ['SATS', 'USD', 'BTC'];
+
+// Stable order ID so it doesn't regenerate on re-renders
+const ORDER_ID = `GEN-${Math.floor(Math.random() * 90000) + 10000}`;
 
 export function Payments() {
   const [step, setStep] = useState<Step>('form');
   const [amount, setAmount] = useState('');
-  const [currencyMode, setCurrencyMode] = useState<CurrencyMode>('SATS');
   const [description, setDescription] = useState('');
+  const [currency, setCurrency] = useState<CurrencyMode>('SATS');
   const [selectedStore, setSelectedStore] = useState(STORES[0]);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const getSats = (): number => {
-    const val = parseFloat(amount) || 0;
-    if (currencyMode === 'SATS') return val;
-    if (currencyMode === 'USD') return Math.round((val / BTC_PRICE) * 100_000_000);
-    if (currencyMode === 'BTC') return Math.round(val * 100_000_000);
-    return 0;
-  };
-
-  const getUSD = (): string => {
-    const sats = getSats();
-    return ((sats / 100_000_000) * BTC_PRICE).toFixed(2);
-  };
-
-  const handleGenerate = async () => {
-    const sats = getSats();
-    if (!sats || sats < 1) return;
-    setIsLoading(true);
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || loading) return;
+    setLoading(true);
     try {
-      const inv = await paymentService.createInvoice(sats, description, selectedStore);
+      let sats = parseInt(amount);
+      if (currency === 'USD') sats = Math.floor(parseFloat(amount) * 1587);
+      if (currency === 'BTC') sats = Math.floor(parseFloat(amount) * 100_000_000);
+      const inv = await paymentService.createInvoice(sats, description || 'Merchant Payment', selectedStore);
       setInvoice(inv);
       setStep('qr');
-      setConfirmed(false);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleRegenerate = useCallback(async () => {
-    if (!invoice) return;
-    setIsLoading(true);
-    try {
-      const inv = await paymentService.regenerateInvoice(invoice);
-      setInvoice(inv);
-      setConfirmed(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [invoice]);
-
-  const handlePaymentConfirmed = useCallback(() => {
-    setConfirmed(true);
-  }, []);
+  const reset = () => { setStep('form'); setInvoice(null); setAmount(''); setDescription(''); };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <h1 className="text-3xl font-bold text-[#0A192F]">Cobrar / POS</h1>
-        {step !== 'form' && (
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <button onClick={() => { setStep('form'); setInvoice(null); setConfirmed(false); }}
-              className="hover:text-[#0A192F] transition-colors font-medium">Nuevo cobro</button>
-            <ChevronRight size={14} />
-            <span className={step === 'qr' ? 'text-[#F4B41A] font-bold' : 'text-gray-400'}>QR Invoice</span>
-            {confirmed && <><ChevronRight size={14} /><span className="text-emerald-600 font-bold">Comprobante</span></>}
-          </div>
-        )}
-      </div>
+    <div className="flex h-full overflow-hidden bg-[#060E1E]">
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* LEFT: Form */}
-        <div className={`glass p-8 space-y-6 ${step !== 'form' ? 'opacity-60 pointer-events-none' : ''}`}>
-          <h2 className="text-xl font-bold text-[#0A192F] flex items-center gap-2">
-            <ReceiptText size={20} className="text-[#F4B41A]" /> Crear Cobro
-          </h2>
+      {/* LEFT: Form Panel */}
+      <div className="w-[460px] border-r border-[#1a2d4a] flex flex-col shrink-0">
+        {/* Sub-header */}
+        <div className="border-b border-[#1a2d4a] px-5 py-3 flex items-center gap-2">
+          <Zap size={14} className="text-[#FCD535]" />
+          <h1 className="text-[14px] font-bold text-[#EAECEF]">POS Terminal</h1>
+          <span className="text-[11px] text-[#6B8CAE]">— Lightning Network</span>
+        </div>
 
-          {/* Currency Selector */}
-          <div>
-            <label className="block text-sm font-bold text-gray-500 mb-2 uppercase tracking-widest">Moneda</label>
-            <div className="flex rounded-xl overflow-hidden border border-gray-200">
-              {(['SATS', 'USD', 'BTC'] as CurrencyMode[]).map((c) => (
-                <button
-                  key={c}
-                  onClick={() => { setCurrencyMode(c); setAmount(''); }}
-                  className={`flex-1 py-2.5 text-sm font-bold transition-colors ${
-                    currencyMode === c ? 'bg-[#0A192F] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  {c === 'SATS' ? <><Zap size={12} className="inline mr-1 text-[#F4B41A]" />SATS</> :
-                   c === 'BTC' ? <><Bitcoin size={12} className="inline mr-1 text-orange-500" />BTC</> : `$ USD`}
-                </button>
+        <div className="flex-1 overflow-y-auto no-scrollbar p-5">
+          <form onSubmit={handleGenerate} className="space-y-5">
+            {/* Amount Input */}
+            <div>
+              <label className="block text-[10px] text-[#6B8CAE] uppercase tracking-wider mb-1.5">Payment Amount</label>
+              <div className="flex border border-[#1a2d4a] rounded overflow-hidden focus-within:border-[#FCD535] transition-colors bg-[#0D1F3C]">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  disabled={step !== 'form'}
+                  className="flex-1 bg-transparent px-4 py-3 text-[22px] font-black text-[#EAECEF] outline-none placeholder-[#3D4D5C]"
+                />
+                {/* Currency Toggle */}
+                <div className="flex border-l border-[#1a2d4a]">
+                  {CURRENCIES.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCurrency(c)}
+                      className={cn(
+                        "px-3 text-[11px] font-bold transition-colors",
+                        currency === c ? "bg-[#FCD535]/10 text-[#FCD535]" : "text-[#6B8CAE] hover:text-[#EAECEF]"
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Store Selector */}
+            <div>
+              <label className="block text-[10px] text-[#6B8CAE] uppercase tracking-wider mb-1.5">Merchant Node</label>
+              <select
+                value={selectedStore}
+                onChange={e => setSelectedStore(e.target.value)}
+                disabled={step !== 'form'}
+                className="w-full bg-[#0D1F3C] border border-[#1a2d4a] rounded px-3 py-2.5 text-[12px] text-[#EAECEF] outline-none focus:border-[#FCD535] transition-colors appearance-none cursor-pointer"
+              >
+                {STORES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            {/* Order ID */}
+            <div>
+              <label className="block text-[10px] text-[#6B8CAE] uppercase tracking-wider mb-1.5">Order ID</label>
+              <div className="bg-[#060E1E] border border-[#1a2d4a] rounded px-3 py-2.5 text-[11px] font-mono text-[#6B8CAE]">
+                {ORDER_ID}
+              </div>
+            </div>
+
+            {/* Memo */}
+            <div>
+              <label className="block text-[10px] text-[#6B8CAE] uppercase tracking-wider mb-1.5">Internal Memo</label>
+              <input
+                type="text"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Product or service description..."
+                disabled={step !== 'form'}
+                className="w-full bg-[#0D1F3C] border border-[#1a2d4a] rounded px-3 py-2.5 text-[12px] text-[#EAECEF] placeholder-[#3D4D5C] outline-none focus:border-[#FCD535] transition-colors"
+              />
+            </div>
+
+            {/* CTA */}
+            {step === 'form' ? (
+              <button
+                type="submit"
+                disabled={!amount || loading}
+                className="w-full py-3 bg-[#FCD535] text-[#060E1E] font-black rounded text-[13px] hover:bg-[#f0c90a] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {loading ? <div className="w-4 h-4 border-2 border-[#060E1E]/30 border-t-[#060E1E] rounded-full animate-spin" /> : <Zap size={16} />}
+                Generate Terminal QR
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={reset}
+                className="w-full py-3 bg-[#0D1F3C] border border-[#1a2d4a] text-[#EAECEF] font-bold rounded text-[12px] hover:bg-white/5 transition-colors"
+              >
+                Reset Terminal
+              </button>
+            )}
+          </form>
+
+          {/* Recent Payments */}
+          <div className="mt-6">
+            <div className="text-[10px] text-[#6B8CAE] uppercase tracking-wider mb-2">Recent Payments</div>
+            <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded divide-y divide-[#1a2d4a]">
+              {[
+                { id: 'inv_001', amount: '12,000 SATS', store: 'Café Central', status: 'paid' },
+                { id: 'inv_002', amount: '5,500 SATS', store: 'Tienda Online', status: 'paid' },
+                { id: 'inv_003', amount: '87,000 SATS', store: 'Sucursal Norte', status: 'expired' },
+              ].map(r => (
+                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-white/3 transition-colors">
+                  <div>
+                    <div className="text-[12px] text-[#EAECEF] font-bold">{r.amount}</div>
+                    <div className="text-[10px] text-[#6B8CAE]">{r.store}</div>
+                  </div>
+                  <span className={cn("text-[9px] font-black uppercase px-1.5 py-0.5 rounded",
+                    r.status === 'paid' ? 'text-[#0ECB81] bg-[#0ECB81]/10' : 'text-[#6B8CAE] bg-[#6B8CAE]/10'
+                  )}>
+                    {r.status}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
-
-          {/* Amount Input */}
-          <div>
-            <label className="block text-sm font-bold text-gray-500 mb-2 uppercase tracking-widest">Monto</label>
-            <div className="relative">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder={currencyMode === 'SATS' ? '0' : currencyMode === 'USD' ? '0.00' : '0.00000000'}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 pl-5 pr-20 text-3xl font-black text-[#0A192F] focus:outline-none focus:border-[#F4B41A] transition-colors"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">{currencyMode}</span>
-            </div>
-            {amount && parseFloat(amount) > 0 && (
-              <p className="text-xs text-gray-400 mt-2 text-right">
-                ≈ {getSats().toLocaleString()} SATS · ${getUSD()} USD
-              </p>
-            )}
-          </div>
-
-          {/* Store Selector */}
-          <div>
-            <label className="block text-sm font-bold text-gray-500 mb-2 uppercase tracking-widest">
-              <Store size={12} className="inline mr-1" /> Sucursal / Caja
-            </label>
-            <select
-              value={selectedStore}
-              onChange={(e) => setSelectedStore(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-[#0A192F] font-semibold focus:outline-none focus:border-[#F4B41A] transition-colors"
-            >
-              {STORES.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-bold text-gray-500 mb-2 uppercase tracking-widest">Descripción (opcional)</label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ej: Orden #1234, Mesa 5, Servicio..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-[#0A192F] focus:outline-none focus:border-[#F4B41A] transition-colors"
-            />
-          </div>
-
-          <button
-            onClick={handleGenerate}
-            disabled={!amount || parseFloat(amount) <= 0 || isLoading}
-            className="w-full py-4 bg-[#0A192F] text-white font-bold text-lg rounded-2xl hover:bg-[#1A2C49] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Generando...</span>
-            ) : (
-              <><Zap size={20} className="text-[#F4B41A]" /> Generar QR Lightning</>
-            )}
-          </button>
         </div>
+      </div>
 
-        {/* RIGHT: QR or Receipt */}
-        <div className="glass p-8">
-          {step === 'form' && (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-12">
-              <div className="w-20 h-20 rounded-3xl bg-gray-50 border border-gray-200 flex items-center justify-center">
-                <Zap size={36} className="text-gray-300" />
-              </div>
-              <p className="text-gray-400 font-medium">Completa el formulario<br/>para generar el cobro.</p>
+      {/* RIGHT: QR / Status Panel */}
+      <div className="flex-1 flex items-center justify-center bg-[#060E1E] relative overflow-hidden">
+        {/* Ambient glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#FCD535]/3 rounded-full blur-[120px] -mr-32 -mt-32 pointer-events-none" />
+
+        {step === 'form' && (
+          <div className="text-center space-y-4">
+            <div className="w-28 h-28 bg-[#0D1F3C] border-2 border-dashed border-[#1a2d4a] rounded-2xl mx-auto flex items-center justify-center">
+              <Zap size={40} className="text-[#1a2d4a]" />
             </div>
-          )}
+            <div>
+              <p className="text-[16px] font-black text-[#1a2d4a] uppercase tracking-widest">Awaiting Input</p>
+              <p className="text-[11px] text-[#3D4D5C] mt-1 max-w-xs">Configure the payment parameters on the left to activate the terminal</p>
+            </div>
+          </div>
+        )}
 
-          {step === 'qr' && invoice && !confirmed && (
+        {step === 'qr' && invoice && (
+          <div className="z-10">
             <QRPaymentCard
               invoice={invoice}
-              onRegenerate={handleRegenerate}
-              onPaymentConfirmed={handlePaymentConfirmed}
+              onRegenerate={reset}
+              onPaymentConfirmed={() => setTimeout(() => setStep('receipt'), 1500)}
             />
-          )}
+          </div>
+        )}
 
-          {(step === 'qr' && confirmed) && invoice && (
-            <div className="flex flex-col items-center gap-5 py-4 text-center">
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center">
-                <CheckCircle2 size={40} className="text-emerald-600" />
+        {step === 'receipt' && (
+          <div className="bg-[#0D1F3C] border border-[#1a2d4a] rounded-lg p-8 text-center space-y-5 max-w-sm w-full z-10">
+            <div className="w-16 h-16 bg-[#0ECB81]/15 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 size={32} className="text-[#0ECB81]" />
+            </div>
+            <div>
+              <h2 className="text-[20px] font-black text-[#EAECEF] uppercase tracking-wider">Settled</h2>
+              <p className="text-[11px] text-[#6B8CAE] mt-1">Invoice confirmed on-chain</p>
+            </div>
+            <div className="bg-[#060E1E] border border-[#1a2d4a] rounded p-4 space-y-2 text-left">
+              <div className="flex justify-between items-center pb-2 border-b border-[#1a2d4a]">
+                <span className="text-[10px] uppercase tracking-wider text-[#6B8CAE]">Settlement</span>
+                <span className="text-[13px] font-black text-[#0ECB81]">+{invoice?.amountSats?.toLocaleString() ?? 0} SATS</span>
               </div>
-              <div>
-                <h3 className="text-2xl font-black text-[#0A192F] mb-1">¡Pago Confirmado!</h3>
-                <p className="text-gray-500">El pago Lightning fue recibido exitosamente.</p>
+              <div className="flex justify-between text-[10px] text-[#6B8CAE]">
+                <span>TX ID</span>
+                <span className="font-mono">{invoice?.id.slice(0, 16)}...</span>
               </div>
-              <div className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-6 text-left space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Referencia</span>
-                  <span className="font-mono font-bold text-[#0A192F]">{invoice.id}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Monto</span>
-                  <span className="font-bold text-[#0A192F]">{invoice.amountSats.toLocaleString()} SATS</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Equivalente</span>
-                  <span className="font-bold text-[#0A192F]">${getUSD()} USD</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Sucursal</span>
-                  <span className="font-bold text-[#0A192F]">{invoice.store}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Red</span>
-                  <span className="font-bold text-emerald-600 flex items-center gap-1">
-                    <Zap size={12} /> Lightning Network
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Hora</span>
-                  <span className="font-mono text-[#0A192F]">{new Date().toLocaleTimeString('es-EC')}</span>
-                </div>
-              </div>
+            </div>
+            <div className="flex gap-3">
+              <button className="flex-1 py-2.5 bg-[#0D1F3C] border border-[#1a2d4a] text-[#6B8CAE] rounded text-[11px] font-bold hover:text-[#EAECEF] transition-colors flex items-center justify-center gap-1.5">
+                <ReceiptText size={13} /> Receipt
+              </button>
               <button
-                onClick={() => { setStep('form'); setInvoice(null); setAmount(''); setDescription(''); setConfirmed(false); }}
-                className="w-full py-3.5 bg-[#F4B41A] text-[#0A192F] font-bold rounded-2xl hover:bg-[#FFC13B] transition-colors"
+                onClick={reset}
+                className="flex-1 py-2.5 bg-[#FCD535] text-[#060E1E] rounded text-[11px] font-bold hover:bg-[#f0c90a] transition-colors"
               >
-                Nuevo Cobro
+                New Payment
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

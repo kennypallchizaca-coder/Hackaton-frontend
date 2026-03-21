@@ -1,48 +1,34 @@
+// import api from './api';
 import { type Invoice, type PaymentStatus } from '../types';
 
-let invoiceCounter = 9;
-
-const generateLightningInvoice = (sats: number): string => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const random = Array.from({ length: 64 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  return `lnbc${sats}n1p${random}`;
-};
-
 export const paymentService = {
-  createInvoice: (amountSats: number, description: string, store: string): Promise<Invoice> => {
+  createInvoice: async (amountSats: number, description: string, store: string): Promise<Invoice> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        invoiceCounter++;
-        const now = Date.now();
         resolve({
-          id: `tx_inv${invoiceCounter}`,
-          amountSats,
-          amountUSD: parseFloat(((amountSats / 100_000_000) * 63012.50).toFixed(2)),
-          description: description || `Order #${String(invoiceCounter).padStart(4, '0')}`,
-          status: 'pending' as PaymentStatus,
-          lightningInvoice: generateLightningInvoice(amountSats),
-          expiresAt: now + 15 * 60 * 1000, // 15 minutes
-          createdAt: now,
+          id: `tx_inv_${Date.now()}`,
+          amount: amountSats,
+          amountSats, // Restore for UI compatibility
+          amountUsd: parseFloat(((amountSats / 100_000_000) * 65000).toFixed(2)),
+          description: description || 'New POS Order',
+          status: 'pending',
+          lightningInvoice: `lnbc${amountSats}n1p...mock`,
+          expiresAt: Date.now() + 15 * 60 * 1000,
+          createdAt: Date.now(),
           store
         });
       }, 800);
     });
   },
 
-  checkPaymentStatus: (invoiceId: string): Promise<PaymentStatus> => {
-    // In a real app, this would poll the Lightning Node
+  checkPaymentStatus: async (_invoiceId: string): Promise<PaymentStatus> => {
     return new Promise((resolve) => {
-      setTimeout(() => {
-        // Mock: simulate payment after a few seconds in demo
-        const rand = Math.random();
-        if (rand > 0.6) resolve('paid');
-        else resolve('pending');
-        console.log('Checking invoice:', invoiceId);
-      }, 1000);
+      setTimeout(() => resolve(Math.random() > 0.8 ? 'paid' : 'pending'), 1000);
     });
   },
 
-  regenerateInvoice: (original: Invoice): Promise<Invoice> => {
-    return paymentService.createInvoice(original.amountSats, original.description, original.store);
+  // RESTORED FOR COMPATIBILITY
+  regenerateInvoice: async (original: Invoice): Promise<Invoice> => {
+    return paymentService.createInvoice(original.amountSats || 0, original.description || '', original.store || '');
   }
 };

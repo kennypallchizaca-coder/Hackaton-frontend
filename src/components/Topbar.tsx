@@ -1,73 +1,118 @@
-import { Bell, Search, Menu, Zap } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, ChevronDown, Globe, Download } from './Icons';
 import { useAuthStore } from '../store/authStore';
 
-const routeLabels: Record<string, string> = {
-  '/': 'Dashboard',
-  '/payments': 'Cobrar (POS)',
-  '/transactions': 'Transacciones',
-  '/stores': 'Sucursales',
-  '/compliance': 'Compliance · KYT',
-  '/genlayer': 'GenLayer · IA',
-  '/ai-insights': 'IA & Análisis',
-  '/settings': 'Configuración',
-};
+const NAV_ITEMS = [
+  { label: 'Buy Crypto', hasArrow: true },
+  { label: 'Markets', hasArrow: false },
+  { label: 'Trade', hasArrow: true },
+  { label: 'Derivatives', hasArrow: true },
+  { label: 'Earn', hasArrow: true },
+  { label: 'Finance', hasArrow: true },
+  { label: 'NFT', hasArrow: false },
+];
+
+const ANNOUNCEMENT = "KuriPay Merchant Program: Earn 0% fees on BTC/USDT spot trading pairs for verified merchants!";
 
 export function Topbar() {
-  const location = useLocation();
-  const { user } = useAuthStore();
-  const pageLabel = routeLabels[location.pathname] ?? 'Dashboard';
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
 
   return (
-    <header className="h-16 border-b border-gray-100 bg-white flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
-      <div className="flex items-center gap-4 flex-1">
-        <button className="p-2 -ml-2 text-gray-400 hover:text-[#0A192F] lg:hidden">
-          <Menu size={22} />
-        </button>
-
-        {/* Breadcrumb */}
-        <div className="hidden lg:flex items-center gap-2 text-sm font-medium">
-          <div className="flex items-center gap-1.5 text-gray-400">
-            <div className="w-5 h-5 rounded bg-[#F4B41A] flex items-center justify-center">
-              <Zap size={11} className="text-[#0A192F]" />
+    <div className="w-full flex flex-col sticky top-0 z-30">
+      {/* Main Header - 64px */}
+      <header className="h-16 bg-[#0A1628] border-b border-[#1a2d4a] flex items-center justify-between px-4">
+        {/* Left: Logo + Nav */}
+        <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar">
+          {/* Binance-style logo text */}
+          <Link to="/" className="mr-4 flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 rounded overflow-hidden">
+              <img src="/logo.png" alt="KuriPay" className="w-full h-full object-contain" />
             </div>
-            <span>KuriPay</span>
+            <span className="text-[#FCD535] font-black text-[15px] tracking-tight hidden md:block">KuriPay</span>
+          </Link>
+
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.label}
+              className="flex items-center gap-0.5 px-3 py-2 text-[13px] text-[#EAECEF] hover:text-[#FCD535] font-medium transition-colors whitespace-nowrap group"
+            >
+              {item.label}
+              {item.hasArrow && (
+                <ChevronDown size={12} className="text-[#848E9C] group-hover:text-[#FCD535] transition-colors ml-0.5" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Deposit Button */}
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FCD535] text-[#181A20] text-[12px] font-bold rounded hover:bg-[#f0c90a] transition-colors">
+            <Download size={13} />
+            Deposit
+          </button>
+
+          <div className="w-px h-5 bg-[#1a2d4a] mx-1" />
+
+          {/* Wallet / Orders */}
+          <button className="flex items-center gap-1 px-2 py-2 text-[13px] text-[#EAECEF] hover:text-[#FCD535] font-medium transition-colors">
+            Wallet
+            <ChevronDown size={12} className="text-[#848E9C]" />
+          </button>
+
+          <button className="flex items-center gap-1 px-2 py-2 text-[13px] text-[#EAECEF] hover:text-[#FCD535] font-medium transition-colors">
+            Orders
+            <ChevronDown size={12} className="text-[#848E9C]" />
+          </button>
+
+          <div className="w-px h-5 bg-[#1a2d4a] mx-1" />
+
+          {/* User Avatar */}
+          <button className="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#1a2d4a] transition-colors">
+            <div className="w-7 h-7 rounded-full bg-[#FCD535] flex items-center justify-center text-[#181A20] text-[11px] font-black">
+              {user?.name?.[0]?.toUpperCase() ?? 'M'}
+            </div>
+            <span className="text-[12px] text-[#EAECEF] font-medium hidden lg:block">{user?.name ?? 'Merchant'}</span>
+          </button>
+
+          {/* Notifications */}
+          <button className="relative p-2 text-[#848E9C] hover:text-[#EAECEF] transition-colors">
+            <Bell size={17} />
+            <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-[#F6465D] rounded-full text-white text-[8px] font-black flex items-center justify-center">8</span>
+          </button>
+
+          {/* Language */}
+          <button className="p-2 text-[#848E9C] hover:text-[#EAECEF] transition-colors">
+            <Globe size={17} />
+          </button>
+
+          <button
+            onClick={() => { logout(); navigate('/login'); }}
+            className="text-[11px] text-[#6B8CAE] font-bold uppercase tracking-wider px-2 py-1 hover:text-[#F6465D] transition-colors border-l border-[#1a2d4a] ml-1 pl-3"
+          >
+            Log out
+          </button>
+        </div>
+      </header>
+
+      {/* Announcement/Ticker Bar - 48px */}
+      <div className="h-10 bg-[#060E1E] border-b border-[#1a2d4a] flex items-center px-4 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
+          <div className="animate-marquee-slow whitespace-nowrap flex gap-16">
+            {[ANNOUNCEMENT, "Binance Simple Earn: Enjoy Exclusive APR & Get 10 BNB in Rewards!", "New Margin Pairs: TRU & More — Zero fee promotion"].map((msg, i) => (
+              <span key={i} className="text-[12px] text-[#848E9C]">
+                <span className="text-[#FCD535] font-bold mr-2">#{i + 1}</span>
+                {msg}
+                <span className="text-[#FCD535] ml-2 font-bold">(03-10)</span>
+              </span>
+            ))}
           </div>
-          <span className="text-gray-300">/</span>
-          <span className="text-[#0A192F] font-bold">{pageLabel}</span>
         </div>
-
-        {/* Search */}
-        <div className="hidden lg:flex items-center flex-1 max-w-xs relative group ml-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#F4B41A] transition-colors" size={16} />
-          <input
-            type="text"
-            placeholder="Buscar tx, hash, dirección..."
-            className="w-full bg-gray-50 border border-transparent rounded-lg py-2 pl-9 pr-4 text-sm text-[#0A192F] outline-none focus:border-[#F4B41A]/40 focus:bg-white transition-all placeholder:text-gray-300"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        {/* Notification bell */}
-        <button className="relative p-2 text-gray-400 hover:text-[#0A192F] transition-colors">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#A31621] rounded-full" />
+        <button className="text-[#848E9C] hover:text-[#EAECEF] ml-4 shrink-0">
+          <span className="text-[11px]">✕</span>
         </button>
-
-        <div className="h-5 w-px bg-gray-200" />
-
-        {/* User chip */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F4B41A] to-[#FFC13B] flex items-center justify-center text-[#0A192F] font-black text-sm shadow-sm">
-            {user?.name?.[0] ?? 'M'}
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-xs font-bold text-[#0A192F] leading-none">{user?.name ?? 'Merchant'}</p>
-            <p className="text-[10px] text-gray-400 leading-none mt-0.5">{user?.role ?? 'admin'}</p>
-          </div>
-        </div>
       </div>
-    </header>
+    </div>
   );
 }

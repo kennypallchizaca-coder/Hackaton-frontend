@@ -3,41 +3,93 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: #060E1E;
+    --foreground: #EAECEF;
+    --primary: #FCD535;
+    --card: #0D1F3C;
+    --border: #1a2d4a;
+    --muted: #6B8CAE;
+    --success: #0ECB81;
+    --error: #F6465D;
+  }
+
   body {
-    @apply bg-bg-light text-[#0A192F] font-inter antialiased;
+    @apply font-inter antialiased;
+    background-color: #060E1E;
+    color: #EAECEF;
+    margin: 0;
+    padding: 0;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
+    color: #EAECEF;
   }
+
+  /* Dark navy scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background-color: #060E1E; }
+  ::-webkit-scrollbar-thumb { background-color: #1a2d4a; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background-color: #6B8CAE; }
 }
 
 @layer components {
-  .btn-web3 {
-    @apply rounded-full bg-gradient-web3 text-bg-dark font-bold py-3 px-8 transition-all duration-300 hover:shadow-glow-gold hover:scale-105 active:scale-95;
+  .binance-card {
+    @apply bg-[#1E2329] border border-[#2B3139] rounded-lg overflow-hidden;
   }
-  
-  .btn-web3-outline {
-    @apply rounded-full border border-accent-gold/50 text-accent-gold font-bold py-3 px-8 transition-all duration-300 hover:bg-accent-gold/10;
+
+  .binance-btn-primary {
+    @apply bg-[#FCD535] text-[#181A20] font-bold py-2 px-4 rounded hover:bg-[#F0C210] transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-web3;
+
+  .binance-btn-buy {
+    @apply bg-[#0ECB81] text-white font-bold rounded py-2 px-4 hover:bg-[#0ab571] transition-colors;
+  }
+
+  .binance-btn-sell {
+    @apply bg-[#F6465D] text-white font-bold rounded py-2 px-4 hover:bg-[#e03350] transition-colors;
+  }
+
+  .binance-btn-ghost {
+    @apply text-[#848E9C] hover:text-[#EAECEF] transition-colors;
+  }
+
+  .trading-input {
+    @apply bg-transparent border border-[#2B3139] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#FCD535] transition-colors w-full text-[#EAECEF];
+  }
+
+  .binance-tab {
+    @apply text-xs font-bold text-[#848E9C] hover:text-[#EAECEF] transition-colors pb-3 border-b-2 border-transparent relative uppercase tracking-wider;
+  }
+
+  .binance-tab-active {
+    @apply text-[#EAECEF] border-b-2 border-[#FCD535];
   }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-card-light rounded-[16px] border border-gray-100 shadow-soft;
-  }
-  
-  .glass-glowing {
-    @apply bg-card-light rounded-[16px] border border-gray-100 shadow-soft relative overflow-hidden transition-shadow duration-300 hover:shadow-soft-hover;
-  }
+  .text-success { color: #0ECB81; }
+  .text-error { color: #F6465D; }
+  .bg-success { background-color: #0ECB81; }
+  .bg-error { background-color: #F6465D; }
 
-  .pixelated {
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .glass {
+    @apply bg-[#1E2329]/80 backdrop-blur-md border border-[#2B3139];
   }
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee-slow {
+  animation: marquee 40s linear infinite;
+  display: inline-flex;
+  gap: 4rem;
 }

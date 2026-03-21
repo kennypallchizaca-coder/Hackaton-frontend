@@ -1,5 +1,5 @@
 import { type AIInsight } from '../../types';
-import { TrendingUp, AlertTriangle, Lightbulb } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Lightbulb } from '../Icons';
 
 interface InsightCardProps {
   insight: AIInsight;
@@ -29,10 +29,10 @@ const typeConfig = {
   }
 };
 
-const priorityDot: Record<string, string> = {
-  high: 'bg-red-500',
-  medium: 'bg-amber-500',
-  low: 'bg-emerald-500'
+const impactDot: Record<string, string> = {
+  positive: 'bg-emerald-500',
+  negative: 'bg-red-500',
+  neutral: 'bg-amber-500'
 };
 
 export function InsightCard({ insight }: InsightCardProps) {
@@ -46,13 +46,13 @@ export function InsightCard({ insight }: InsightCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`w-2 h-2 rounded-full ${priorityDot[insight.priority]}`} />
+            <span className={`w-2 h-2 rounded-full ${impactDot[insight.impact || 'neutral']}`} />
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
               {insight.type === 'summary' ? 'Resumen' : insight.type === 'anomaly' ? 'Anomalía' : 'Recomendación'}
             </p>
           </div>
           <h3 className="font-bold text-[#0A192F] text-sm mb-1">{insight.title}</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">{insight.body}</p>
+          <p className="text-sm text-gray-600 leading-relaxed">{insight.content}</p>
         </div>
         {insight.icon && (
           <span className="text-2xl shrink-0">{insight.icon}</span>

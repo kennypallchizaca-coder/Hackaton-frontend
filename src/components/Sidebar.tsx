@@ -1,127 +1,136 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Wallet, ArrowLeftRight, Store, Settings, ShieldAlert, Cpu, Sparkles, LogOut, Zap } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuthStore } from '../store/authStore';
 
-const navItems = [
-  { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={18} /> },
-  { name: 'Cobrar (POS)', path: '/payments', icon: <Wallet size={18} /> },
-  { name: 'Transacciones', path: '/transactions', icon: <ArrowLeftRight size={18} /> },
-  { name: 'Sucursales', path: '/stores', icon: <Store size={18} /> },
-];
+// Inline SVGs matching SVGRepo Solar Bold style (https://www.svgrepo.com/collection/solar-bold-icons/)
+const Icons = {
+  Trade: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  AIInsights: (
+    <svg width="20" height="20" viewBox="0 0 512 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(64, 64)">
+        <path d="M320,64 L320,320 L64,320 L64,64 L320,64 Z M171.749388,128 L146.817842,128 L99.4840387,256 L121.976629,256 L130.913039,230.977 L187.575039,230.977 L196.319607,256 L220.167172,256 L171.749388,128 Z M260.093778,128 L237.691519,128 L237.691519,256 L260.093778,256 L260.093778,128 Z M159.094727,149.47526 L181.409039,213.333 L137.135039,213.333 L159.094727,149.47526 Z M341.333333,256 L384,256 L384,298.666667 L341.333333,298.666667 L341.333333,256 Z M85.3333333,341.333333 L128,341.333333 L128,384 L85.3333333,384 L85.3333333,341.333333 Z M170.666667,341.333333 L213.333333,341.333333 L213.333333,384 L170.666667,384 L170.666667,341.333333 Z M85.3333333,0 L128,0 L128,42.6666667 L85.3333333,42.6666667 L85.3333333,0 Z M256,341.333333 L298.666667,341.333333 L298.666667,384 L256,384 L256,341.333333 Z M170.666667,0 L213.333333,0 L213.333333,42.6666667 L170.666667,42.6666667 L170.666667,0 Z M256,0 L298.666667,0 L298.666667,42.6666667 L256,42.6666667 L256,0 Z M341.333333,170.666667 L384,170.666667 L384,213.333333 L341.333333,213.333333 L341.333333,170.666667 Z M0,256 L42.6666667,256 L42.6666667,298.666667 L0,298.666667 L0,256 Z M341.333333,85.3333333 L384,85.3333333 L384,128 L341.333333,128 L341.333333,85.3333333 Z M0,170.666667 L42.6666667,170.666667 L42.6666667,213.333333 L0,213.333333 L0,170.666667 Z M0,85.3333333 L42.6666667,85.3333333 L42.6666667,128 L0,128 L0,85.3333333 Z" />
+      </g>
+    </svg>
+  ),
+  POS: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/>
+      <path d="M3 10h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M7 15h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  Orders: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 16l-4-4 4-4M17 8l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3 12h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  Compliance: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  GenLayer: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19,5V19H5V5H19m0-2H5A2,2,0,0,0,3,5V19a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2V5a2,2,0,0,0-2-2Z" />
+      <g>
+        <path d="M12.3,16.18l-.57-1.87H8.86l-.57,1.87H6.5L9.27,8.29h2l2.78,7.89Zm-1-3.27c-.53-1.69-.82-2.65-.89-2.87s-.11-.4-.14-.53c-.12.46-.46,1.6-1,3.4Z" />
+        <path d="M14.88,8.62c0-.53.3-.8.89-.8s.89.27.89.8a.76.76,0,0,1-.22.59.9.9,0,0,1-.67.22C15.18,9.43,14.88,9.16,14.88,8.62Zm1.71,7.56H15v-6h1.64Z" />
+      </g>
+    </svg>
+  ),
+  Analytics: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 17l4-6 4 3 4-7 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3 21h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  Settings: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Logout: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M21 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+};
 
-const hackathonItems = [
-  { name: 'Compliance KYT', path: '/compliance', icon: <ShieldAlert size={18} /> },
-  { name: 'GenLayer IA', path: '/genlayer', icon: <Cpu size={18} /> },
-  { name: 'IA & Análisis', path: '/ai-insights', icon: <Sparkles size={18} /> },
+const navItems = [
+  { name: 'Trade', path: '/', icon: Icons.Trade },
+  { name: 'AI Insights', path: '/analytics', icon: Icons.AIInsights },
+  { name: 'POS Terminal', path: '/payments', icon: Icons.POS },
+  { name: 'Orders', path: '/transactions', icon: Icons.Orders },
+  { name: 'Compliance', path: '/compliance', icon: Icons.Compliance },
+  { name: 'GenLayer AI', path: '/genlayer', icon: Icons.GenLayer },
+  { name: 'Settings', path: '/settings', icon: Icons.Settings },
 ];
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { logout } = useAuthStore();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const NavLink = ({ item, accentColor = 'accent-gold' }: { item: typeof navItems[0]; accentColor?: string }) => {
-    const isActive = location.pathname === item.path;
-    const goldActive = accentColor === 'accent-gold';
-    return (
-      <Link
-        to={item.path}
-        className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium group",
-          isActive
-            ? "bg-white/10 text-white"
-            : "text-[#8892B0] hover:bg-white/5 hover:text-white"
-        )}
-      >
-        <div className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-          isActive
-            ? goldActive ? "bg-[#F4B41A] text-[#0A192F]" : "bg-[#A31621] text-white"
-            : "bg-white/5 text-[#8892B0] group-hover:bg-white/10 group-hover:text-white"
-        )}>
-          {item.icon}
-        </div>
-        <span>{item.name}</span>
-      </Link>
-    );
-  };
-
   return (
-    <aside className="w-64 h-screen fixed top-0 left-0 bg-[#0A192F] flex flex-col pb-4 z-40 hidden lg:flex border-r border-white/5">
-      {/* Brand Header */}
-      <div className="p-5 border-b border-white/5 mb-2">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#F4B41A] flex items-center justify-center shadow-lg">
-            <Zap size={18} className="text-[#0A192F]" />
-          </div>
-          <div>
-            <p className="text-white font-black text-lg tracking-widest leading-none">KURIPAY</p>
-            <p className="text-[10px] text-gray-500 tracking-widest">BTC · Lightning · EC</p>
-          </div>
-        </Link>
+    <aside className="w-14 h-screen fixed top-0 left-0 bg-[#0A1628] flex flex-col items-center py-3 z-40 border-r border-[#1a2d4a]">
+      {/* Logo */}
+      <Link to="/" className="mb-4 flex items-center justify-center">
+        <div className="w-8 h-8 rounded overflow-hidden">
+          <img src="/logo.png" alt="KuriPay" className="w-full h-full object-contain" />
+        </div>
+      </Link>
+
+      {/* Nav */}
+      <div className="flex-1 flex flex-col gap-0.5 w-full px-1">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path + item.name}
+              to={item.path}
+              title={item.name}
+              className={cn(
+                "flex items-center justify-center w-full h-10 rounded transition-all duration-150 relative group",
+                isActive
+                  ? "text-[#FCD535] bg-[#FCD535]/10"
+                  : "text-[#6B8CAE] hover:text-[#EAECEF] hover:bg-[#1a2d4a]"
+              )}
+            >
+              {item.icon}
+              {isActive && (
+                <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-[#FCD535] rounded-r" />
+              )}
+              {/* Tooltip */}
+              <span className="absolute left-14 bg-[#0D2040] text-[#EAECEF] text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-[#1a2d4a] shadow-xl z-50">
+                {item.name}
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-6">
-        <div className="space-y-1">
-          <p className="px-3 text-[9px] font-black text-[#4A5568] uppercase tracking-[0.15em] mb-2">Plataforma</p>
-          {navItems.map((item) => (
-            <NavLink key={item.path} item={item} accentColor="accent-gold" />
-          ))}
-        </div>
-
-        <div className="space-y-1">
-          <p className="px-3 text-[9px] font-black text-[#4A5568] uppercase tracking-[0.15em] mb-2">Hackathon Modules</p>
-          {hackathonItems.map((item) => (
-            <NavLink key={item.path} item={item} accentColor="accent-red" />
-          ))}
-        </div>
-      </div>
-
-      {/* User Footer */}
-      <div className="px-3 pt-3 border-t border-white/5 space-y-1">
-        <Link
-          to="/settings"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium group",
-            location.pathname === '/settings'
-              ? "bg-white/10 text-white"
-              : "text-[#8892B0] hover:bg-white/5 hover:text-white"
-          )}
-        >
-          <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center",
-            location.pathname === '/settings' ? "bg-[#F4B41A] text-[#0A192F]" : "bg-white/5 text-[#8892B0] group-hover:bg-white/10 group-hover:text-white"
-          )}>
-            <Settings size={18} />
-          </div>
-          <span>Configuración</span>
-        </Link>
-
-        {/* User card */}
-        <div className="flex items-center gap-3 px-3 py-3 rounded-xl">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F4B41A] to-[#FFC13B] flex items-center justify-center text-[#0A192F] font-black text-sm shrink-0">
-            {user?.name?.[0] ?? 'M'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-bold truncate">{user?.name ?? 'Merchant'}</p>
-            <p className="text-gray-500 text-[10px] truncate">{user?.email ?? ''}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            title="Cerrar sesión"
-            className="text-gray-600 hover:text-red-400 transition-colors p-1"
-          >
-            <LogOut size={15} />
-          </button>
-        </div>
-      </div>
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        title="Log Out"
+        className="w-10 h-10 flex items-center justify-center rounded text-[#6B8CAE] hover:text-[#F6465D] hover:bg-[#1a2d4a] transition-all"
+      >
+        {Icons.Logout}
+      </button>
     </aside>
   );
 }

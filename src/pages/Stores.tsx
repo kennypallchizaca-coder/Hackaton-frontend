@@ -1,4 +1,4 @@
-import { Store as StoreIcon, MapPin, Activity } from 'lucide-react';
+import { Store as StoreIcon, MapPin, Activity } from '../components/Icons';
 
 const mockStores = [
   { id: 1, name: "Downtown Cafe", location: "New York, NY", status: "Active", volume: "0.45", terminals: 2 },

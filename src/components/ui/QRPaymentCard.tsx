@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Copy, RefreshCw, CheckCircle2, Clock, XCircle, Zap } from 'lucide-react';
+import { Copy, RefreshCw, CheckCircle2, Clock, XCircle, Zap } from '../Icons';
 import { type Invoice, type PaymentStatus } from '../../types';
+import { cn } from '../../utils/cn';
 
 interface QRPaymentCardProps {
   invoice: Invoice;
@@ -10,28 +11,34 @@ interface QRPaymentCardProps {
 
 const statusConfig: Record<PaymentStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
   pending: {
-    label: 'Esperando pago...',
-    color: 'text-amber-600',
+    label: 'Waiting for payment...',
+    color: 'text-brand-yellow',
     icon: <Clock size={16} className="animate-pulse" />,
-    bg: 'bg-amber-50 border-amber-200'
+    bg: 'bg-brand-yellow/10 border-brand-yellow/20'
   },
   paid: {
-    label: '¡Pago recibido!',
-    color: 'text-emerald-600',
+    label: 'Payment received!',
+    color: 'text-binance-green',
     icon: <CheckCircle2 size={16} />,
-    bg: 'bg-emerald-50 border-emerald-200'
+    bg: 'bg-binance-green/10 border-binance-green/20'
+  },
+  completed: {
+    label: 'Completed',
+    color: 'text-binance-green',
+    icon: <CheckCircle2 size={16} />,
+    bg: 'bg-binance-green/10 border-binance-green/20'
   },
   failed: {
-    label: 'Pago fallido',
-    color: 'text-red-600',
+    label: 'Payment failed',
+    color: 'text-binance-red',
     icon: <XCircle size={16} />,
-    bg: 'bg-red-50 border-red-200'
+    bg: 'bg-binance-red/10 border-binance-red/20'
   },
   expired: {
-    label: 'Invoice expirado',
-    color: 'text-gray-500',
+    label: 'Invoice expired',
+    color: 'text-binance-muted',
     icon: <XCircle size={16} />,
-    bg: 'bg-gray-50 border-gray-200'
+    bg: 'bg-binance-gray border-binance-border'
   }
 };
 
@@ -47,7 +54,8 @@ export function QRPaymentCard({ invoice, onRegenerate, onPaymentConfirmed }: QRP
   // Countdown timer
   useEffect(() => {
     const update = () => {
-      const remaining = Math.max(0, Math.floor((invoice.expiresAt - Date.now()) / 1000));
+      const exp = typeof invoice.expiresAt === 'number' ? invoice.expiresAt : Date.now();
+      const remaining = Math.max(0, Math.floor((exp - Date.now()) / 1000));
       setTimeLeft(remaining);
       if (remaining === 0 && status === 'pending') {
         setStatus('expired');
@@ -69,132 +77,132 @@ export function QRPaymentCard({ invoice, onRegenerate, onPaymentConfirmed }: QRP
   }, [invoice.id, status, onPaymentConfirmed]);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(invoice.lightningInvoice).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const text = invoice.lightningInvoice || '';
+    if (text) {
+      navigator.clipboard.writeText(text).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }, [invoice.lightningInvoice]);
 
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
-  const cfg = statusConfig[status];
+  const cfg = statusConfig[status] || statusConfig.pending;
 
-  // Build QR SVG from invoice data (simplified grid mock)
-  const btcUSD = (invoice.amountSats / 100_000_000 * 63012.50).toFixed(2);
+  const currentAmountSats = invoice.amountSats || 0;
+  const btcUSD = (currentAmountSats / 100_000_000 * 63012.50).toFixed(2);
 
   return (
-    <div className="flex flex-col items-center gap-5">
-      {/* QR Code (styled SVG mock) */}
-      <div className={`relative p-3 bg-white rounded-3xl shadow-lg border-2 transition-all duration-500 ${
-        status === 'paid' ? 'border-emerald-400 shadow-emerald-100' :
-        status === 'expired' ? 'border-gray-300' : 'border-[#F4B41A]/40'
-      }`}>
-        {status === 'paid' && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-emerald-500/90 z-10">
-            <div className="text-center text-white">
-              <CheckCircle2 size={48} className="mx-auto mb-2" />
-              <p className="font-bold text-lg">¡PAGADO!</p>
+    <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* QR CONTAINER */}
+      <div className={cn(
+        "relative p-4 bg-white rounded-[2rem] shadow-2xl transition-all duration-700 transform",
+        status === 'paid' || status === 'completed' ? "scale-105 border-4 border-binance-green shadow-[0_0_50px_rgba(14,203,129,0.3)]" : 
+        status === 'expired' ? "grayscale opacity-50" : "border-4 border-brand-yellow shadow-[0_0_50px_rgba(252,213,53,0.15)]"
+      )}>
+        {/* Success Overlay */}
+        {(status === 'paid' || status === 'completed') && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-[1.75rem] bg-binance-green/90 z-20 backdrop-blur-sm">
+            <div className="text-center text-binance-black">
+              <CheckCircle2 size={64} className="mx-auto mb-3 animate-bounce" />
+              <p className="font-black text-2xl tracking-tight">PAID</p>
             </div>
           </div>
         )}
+
+        {/* Expired Overlay */}
         {status === 'expired' && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-gray-200/90 z-10">
-            <div className="text-center text-gray-500">
-              <XCircle size={40} className="mx-auto mb-2" />
-              <p className="font-bold">Expirado</p>
+          <div className="absolute inset-0 flex items-center justify-center rounded-[1.75rem] bg-binance-gray/90 z-20 backdrop-blur-sm">
+            <div className="text-center text-binance-muted">
+              <XCircle size={56} className="mx-auto mb-3" />
+              <p className="font-black text-xl">EXPIRED</p>
             </div>
           </div>
         )}
-        {/* Pixel QR grid */}
-        <svg width="196" height="196" viewBox="0 0 196 196" xmlns="http://www.w3.org/2000/svg">
-          <rect width="196" height="196" fill="white"/>
-          {/* Finder patterns */}
-          <rect x="8" y="8" width="49" height="49" rx="4" fill="#0A192F"/>
-          <rect x="13" y="13" width="39" height="39" rx="2" fill="white"/>
-          <rect x="18" y="18" width="29" height="29" rx="1" fill="#0A192F"/>
-          <rect x="139" y="8" width="49" height="49" rx="4" fill="#0A192F"/>
-          <rect x="144" y="13" width="39" height="39" rx="2" fill="white"/>
-          <rect x="149" y="18" width="29" height="29" rx="1" fill="#0A192F"/>
-          <rect x="8" y="139" width="49" height="49" rx="4" fill="#0A192F"/>
-          <rect x="13" y="144" width="39" height="39" rx="2" fill="white"/>
-          <rect x="18" y="149" width="29" height="29" rx="1" fill="#0A192F"/>
-          {/* Data modules (simplified) */}
-          {[70,77,84,91,98,105,112,119,126].map((x) =>
-            [70,77,84,91,98,105,112,119,126].map((y) => {
-              const seed = (x * 13 + y * 7 + invoice.amountSats) % 3;
-              return seed === 0 ? <rect key={`${x}${y}`} x={x} y={y} width="6" height="6" rx="1" fill="#0A192F"/> : null;
-            })
-          )}
-          {[8,15,22,29,36,43,50,57].map((x) =>
-            [70,77,84,91,98,105,112,119,126].map((y) => {
-              const seed = (x * 11 + y * 3) % 2;
-              return seed === 0 ? <rect key={`b${x}${y}`} x={x} y={y} width="6" height="6" rx="1" fill="#0A192F"/> : null;
-            })
-          )}
-          {[139,146,153,160,167,174,181].map((x) =>
-            [70,77,84,91,98,105,112,119,126].map((y) => {
-              const seed = (x * 7 + y * 5) % 2;
-              return seed === 0 ? <rect key={`c${x}${y}`} x={x} y={y} width="6" height="6" rx="1" fill="#0A192F"/> : null;
-            })
-          )}
-          <rect x="139" y="139" width="49" height="6" rx="1" fill="#0A192F"/>
-          <rect x="139" y="151" width="49" height="6" rx="1" fill="#0A192F"/>
-          <rect x="139" y="163" width="49" height="6" rx="1" fill="#0A192F"/>
-          <rect x="139" y="175" width="49" height="6" rx="1" fill="#0A192F"/>
-          {/* Lightning bolt center */}
-          <circle cx="98" cy="98" r="14" fill="#F4B41A"/>
-          <path d="M104 90 L95 100 L101 100 L92 108 L101 97 L95 97 Z" fill="white"/>
-        </svg>
+
+        {/* MOCK QR SVG */}
+        <div className="relative">
+          <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" className="rounded-lg">
+            <rect width="240" height="240" fill="white"/>
+            {/* Finders */}
+            <rect x="10" y="10" width="60" height="60" rx="4" fill="#0B0E11"/>
+            <rect x="16" y="16" width="48" height="48" rx="2" fill="white"/>
+            <rect x="22" y="22" width="36" height="36" rx="1" fill="#0B0E11"/>
+            
+            <rect x="170" y="10" width="60" height="60" rx="4" fill="#0B0E11"/>
+            <rect x="176" y="16" width="48" height="48" rx="2" fill="white"/>
+            <rect x="182" y="22" width="36" height="36" rx="1" fill="#0B0E11"/>
+            
+            <rect x="10" y="170" width="60" height="60" rx="4" fill="#0B0E11"/>
+            <rect x="16" y="176" width="48" height="48" rx="2" fill="white"/>
+            <rect x="22" y="182" width="36" height="36" rx="1" fill="#0B0E11"/>
+            
+            {/* Random pixels */}
+            {[80,90,100,110,120,130,140,150,160].map((x) =>
+              [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220].map((y) => {
+                const seed = (x * 17 + y * 9 + currentAmountSats) % 4;
+                return seed === 0 ? <rect key={`${x}${y}`} x={x} y={y} width="8" height="8" rx="1" fill="#0B0E11"/> : null;
+              })
+            )}
+            
+            {/* Center Logo */}
+            <circle cx="120" cy="120" r="22" fill="#FCD535" stroke="white" strokeWidth="4"/>
+            <path d="M128 110 L114 124 L122 124 L112 134 L122 118 L116 118 Z" fill="#0B0E11" transform="scale(1.2) translate(-20, -20)"/>
+          </svg>
+        </div>
       </div>
 
-      {/* Status indicator */}
-      <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-bold ${cfg.bg} ${cfg.color}`}>
+      {/* Status Badge */}
+      <div className={cn(
+        "flex items-center gap-2 px-5 py-2.5 rounded-full border text-xs font-black uppercase tracking-widest shadow-lg transition-colors",
+        cfg.bg, cfg.color
+      )}>
         {cfg.icon}
         {cfg.label}
       </div>
 
-      {/* Amount */}
-      <div className="text-center">
-        <p className="text-3xl font-black text-[#0A192F]">
-          {invoice.amountSats.toLocaleString()} <span className="text-lg text-[#F4B41A]">SATS</span>
-        </p>
-        <p className="text-sm text-gray-500 mt-1">≈ ${btcUSD} USD · 0.{String(invoice.amountSats).padStart(8, '0').slice(-8)} BTC</p>
-        <p className="text-xs text-gray-400 mt-0.5">{invoice.description}</p>
+      {/* Amount Display */}
+      <div className="text-center space-y-1">
+        <div className="flex items-center justify-center gap-2">
+           <Zap size={24} className="text-brand-yellow" fill="currentColor" />
+           <p className="text-4xl font-black text-binance-text tracking-tighter">
+             {currentAmountSats.toLocaleString()} <span className="text-xl text-brand-yellow">SATS</span>
+           </p>
+        </div>
+        <p className="text-sm font-medium text-binance-muted">≈ ${btcUSD} USD · 0.{String(currentAmountSats).padStart(8, '0').slice(-8)} BTC</p>
+        {invoice.description && <p className="text-xs text-binance-muted italic mt-2 opacity-80 decoration-dotted underline">"{invoice.description}"</p>}
       </div>
 
-      {/* Timer */}
+      {/* Expiry */}
       {status === 'pending' && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Zap size={14} className="text-[#F4B41A]" />
-          Expira en <span className={`font-mono font-bold ${timeLeft < 60 ? 'text-red-500' : 'text-[#0A192F]'}`}>
+        <div className="flex items-center gap-3 text-sm py-2 px-4 bg-binance-gray rounded-lg border border-binance-border">
+          <span className="text-binance-muted font-medium">Expires in</span>
+          <span className={cn(
+            "font-mono font-black text-lg",
+            timeLeft < 60 ? "text-binance-red animate-pulse" : "text-binance-text"
+          )}>
             {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
           </span>
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="flex gap-3 w-full">
+      {/* Actions */}
+      <div className="flex gap-4 w-full pt-2">
         <button
           onClick={handleCopy}
           disabled={status !== 'pending'}
-          className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors font-semibold text-sm text-gray-700 disabled:opacity-40"
+          className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-gray border border-binance-border rounded-xl hover:bg-white/5 active:scale-95 transition-all font-black text-sm text-binance-text disabled:opacity-30 shadow-md"
         >
-          {copied ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
-          {copied ? 'Copiado' : 'Copiar'}
+          {copied ? <CheckCircle2 size={18} className="text-binance-green" /> : <Copy size={18} />}
+          {copied ? 'COPIED' : 'COPY INVOICE'}
         </button>
-        <button
-          onClick={onRegenerate}
-          className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#0A192F] text-white rounded-xl hover:bg-[#1A2C49] transition-colors font-semibold text-sm"
+        <button 
+          onClick={onRegenerate} 
+          className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-black border border-brand-yellow/30 text-brand-yellow rounded-xl hover:bg-brand-yellow hover:text-binance-black active:scale-95 transition-all font-black text-sm shadow-md"
         >
-          <RefreshCw size={16} />
-          Nuevo QR
+          <RefreshCw size={18} /> NEW QR
         </button>
-      </div>
-
-      {/* Invoice string */}
-      <div className="w-full">
-        <p className="text-[10px] font-mono bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-gray-400 truncate">
-          {invoice.lightningInvoice}
-        </p>
       </div>
     </div>
   );
