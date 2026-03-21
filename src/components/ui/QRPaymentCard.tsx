@@ -55,7 +55,21 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
 
   useEffect(() => {
     const update = () => {
-      const expiration = typeof invoice.expiresAt === 'number' ? invoice.expiresAt : Date.now();
+      let expiration = 0;
+      const rawExpiresAt = invoice.expiresAt;
+
+      if (typeof rawExpiresAt === 'number') {
+        // Handle seconds vs milliseconds (if < year 2000, it's likely seconds)
+        expiration = rawExpiresAt < 100000000000 ? rawExpiresAt * 1000 : rawExpiresAt;
+      } else if (typeof rawExpiresAt === 'string') {
+        expiration = new Date(rawExpiresAt).getTime();
+      }
+
+      // If no valid expiration, default to 1 hour from now as a safety fallback
+      if (!expiration || isNaN(expiration)) {
+        expiration = Date.now() + 3600000;
+      }
+
       const remaining = Math.max(0, Math.floor((expiration - Date.now()) / 1000));
       setTimeLeft(remaining);
 

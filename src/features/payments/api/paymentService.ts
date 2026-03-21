@@ -31,7 +31,14 @@ function toInvoice(data: ApiInvoicePayload, fallback: Partial<Invoice> = {}): In
     description: data.description ?? fallback.description ?? 'Merchant Payment',
     status: (data.status?.toLowerCase() || fallback.status || 'pending') as PaymentStatus,
     lightningInvoice: data.lightningInvoice ?? data.paymentRequest ?? fallback.lightningInvoice,
-    expiresAt: data.expiresAt ? new Date(data.expiresAt).getTime() : fallback.expiresAt,
+    expiresAt: (() => {
+      const val = data.expiresAt ?? fallback.expiresAt;
+      if (!val) {
+        return undefined;
+      }
+      const num = typeof val === 'number' ? (val < 100000000000 ? val * 1000 : val) : new Date(val).getTime();
+      return isNaN(num) ? undefined : num;
+    })(),
     createdAt: data.createdAt ? new Date(data.createdAt).getTime() : fallback.createdAt ?? Date.now(),
     store: data.merchantName ?? data.merchantId ?? fallback.store,
   };
