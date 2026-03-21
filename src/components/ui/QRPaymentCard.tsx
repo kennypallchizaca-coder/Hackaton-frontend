@@ -117,8 +117,12 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
         {/* REAL QR GENERATION VIA API */}
         <div className="relative bg-white p-4 rounded-2xl shadow-inner border-4 border-binance-black">
           <img 
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(invoice.lightningInvoice || '')}&bgcolor=ffffff&color=020617&margin=1`}
-            alt="Payment QR Code" 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+              (status === 'paid' || status === 'completed')
+                ? `${window.location.origin}/invoice/${invoice.id}`
+                : (invoice.lightningInvoice || '')
+            )}&bgcolor=ffffff&color=020617&margin=1`}
+            alt={status === 'paid' || status === 'completed' ? "Invoice QR Code" : "Payment QR Code"}
             className="w-[240px] h-[240px] rounded-lg shadow-sm"
           />
         </div>
@@ -160,20 +164,32 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
 
       {/* Actions */}
       <div className="flex gap-4 w-full pt-2">
-        <button
-          onClick={handleCopy}
-          disabled={status !== 'pending'}
-          className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-gray border border-binance-border rounded-xl hover:bg-white/5 active:scale-95 transition-all font-black text-sm text-binance-text disabled:opacity-30 shadow-md"
-        >
-          {copied ? <CheckCircle2 size={18} className="text-binance-green" /> : <Copy size={18} />}
-          {copied ? 'COPIED' : 'COPY INVOICE'}
-        </button>
-        <button 
-          onClick={onRegenerate} 
-          className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-black border border-brand-yellow/30 text-brand-yellow rounded-xl hover:bg-brand-yellow hover:text-binance-black active:scale-95 transition-all font-black text-sm shadow-md"
-        >
-          <RefreshCw size={18} /> NEW QR
-        </button>
+        {(status === 'paid' || status === 'completed') ? (
+          <button
+            onClick={() => window.open(`/invoice/${invoice.id}`, '_blank')}
+            className="w-full flex items-center justify-center gap-3 py-4 bg-brand-yellow border border-brand-yellow rounded-xl hover:bg-yellow-400 active:scale-95 transition-all font-black text-sm text-binance-black shadow-md"
+          >
+            <CheckCircle2 size={18} /> VER FACTURA / PDF
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={handleCopy}
+              disabled={status !== 'pending'}
+              className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-gray border border-binance-border rounded-xl hover:bg-white/5 active:scale-95 transition-all font-black text-sm text-binance-text disabled:opacity-30 shadow-md"
+            >
+              {copied ? <CheckCircle2 size={18} className="text-binance-green" /> : <Copy size={18} />}
+              {copied ? 'COPIED' : 'COPY INVOICE'}
+            </button>
+            <button 
+              onClick={onRegenerate} 
+              disabled={status !== 'pending'}
+              className="flex-1 flex items-center justify-center gap-3 py-4 bg-binance-black border border-brand-yellow/30 text-brand-yellow rounded-xl hover:bg-brand-yellow hover:text-binance-black active:scale-95 transition-all font-black text-sm disabled:opacity-30 shadow-md"
+            >
+              <RefreshCw size={18} /> NEW QR
+            </button>
+          </>
+        )}
       </div>
 
       {status === 'pending' && (

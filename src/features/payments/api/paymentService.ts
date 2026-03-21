@@ -11,7 +11,7 @@ export const paymentService = {
         currency: 'BTC',
       });
       
-      return {
+      const newInvoice: Invoice = {
         id: data.id,
         amount: data.amount,
         amountSats: data.amountSats || amountSats,
@@ -23,10 +23,13 @@ export const paymentService = {
         createdAt: new Date(data.createdAt).getTime(),
         store: data.merchantId,
       };
+      
+      localStorage.setItem(`invoice_receipt_${newInvoice.id}`, JSON.stringify(newInvoice));
+      return newInvoice;
     } catch (error) {
       console.warn('Backend payment creation failed, providing mock fallback for E2E testing:', error);
       // Mock invoice for seamless testing
-      return {
+      const mockInvoice: Invoice = {
         id: `mock-inv-${Math.floor(Math.random() * 1000000)}`,
         amount: amountSats / 1587, 
         amountSats: amountSats,
@@ -38,6 +41,9 @@ export const paymentService = {
         createdAt: Date.now(),
         store: merchantId,
       };
+      
+      localStorage.setItem(`invoice_receipt_${mockInvoice.id}`, JSON.stringify(mockInvoice));
+      return mockInvoice;
     }
   },
 
@@ -101,6 +107,30 @@ export const paymentService = {
     } catch (error) {
       console.error('Failed to fetch recent payments:', error);
       return [];
+    }
+  },
+
+  getInvoiceById: async (id: string): Promise<Invoice | null> => {
+    try {
+      const stored = localStorage.getItem(`invoice_receipt_${id}`);
+      if (stored) return JSON.parse(stored);
+      
+      const { data } = await apiClient.get(`/payments/${id}`);
+      return {
+        id: data.id,
+        amount: data.amountFiat || data.amount || 0,
+        amountSats: data.amountSatsEstimate || data.amountSats || 0,
+        amountUsd: data.amountFiat || 0,
+        description: data.description || 'Merchant Payment',
+        status: (data.status?.toLowerCase() || 'pending') as any,
+        lightningInvoice: data.lightningInvoice || data.paymentRequest,
+        expiresAt: new Date(data.expiresAt).getTime(),
+        createdAt: new Date(data.createdAt).getTime(),
+        store: data.merchantId,
+      };
+    } catch (error) {
+      console.error('Failed to get invoice by ID:', error);
+      return null;
     }
   }
 };

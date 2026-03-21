@@ -1,146 +1,67 @@
-# 🚀 KuriPay — Plataforma de Pagos y Trading Cripto Institucional
+# KuriPay - Criptografía Web Institucional 🚀
 
-**KuriPay** es una plataforma Full-Stack de grado producción que conecta el sistema financiero tradicional (Fiat) con el ecosistema Web3. Centraliza el trading, los pagos vía Lightning Network y herramientas de cumplimiento normativo en una interfaz profesional de alto rendimiento.
+**KuriPay** es una plataforma institucional diseñada para la gestión, ahorro e intercambio de activos (Fiat y Cripto) orientada a estructurar la economía financiera entre tres actores clave de la cadena de valor.
 
-> **Stack:** React 18 + TypeScript · NestJS · Prisma + PostgreSQL · Redis · Tailwind CSS · JWT Auth
-
----
-
-## 🌐 Mapeo de Rutas
-
-| URL | Descripción |
-|-----|-------------|
-| `/` | Landing Page Pública |
-| `/login` | Inicio de Sesión (JWT) |
-| `/register` | Registro de nuevos usuarios |
-| `/app` | Dashboard de Trading (Protegido) |
-| `/app/payments` | Terminal Punto de Venta / QR (Protegido) |
-| `/app/transactions` | Historial de Transacciones (Protegido) |
-| `/app/compliance` | Panel de Cumplimiento & KYT (Protegido) |
-| `/app/settings` | Configuración de Usuario (Protegido) |
+Este repositorio contiene la **Frontend Application** (React + Vite + Tailwind), optimizada, pulida y lista para presentación en Hackathon.
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 👥 Roles del Ecosistema
 
-```mermaid
-graph TD
-    A[Frontend: React 18 + TS] <-->|HTTP/JWT| B[Backend: NestJS API]
-    B <-->|Prisma ORM| C[(PostgreSQL)]
-    B <-->|DASHBOARD| D[(Redis Cache)]
+El flujo económico de KuriPay se sostiene sobre 3 roles de negocio estrictamente definidos:
+
+1. 👤 **El Consumidor**
+   - **Objetivo:** Usuario final que utiliza el sistema para ahorro y gasto diario.
+   - **Funciones:** Compra cripto con dinero real, vende sus criptos únicamente a los Transaccionadores y gasta sus fondos exclusivamente en los Locales.
+
+2. ⚡ **El Transaccionador (Agente de Liquidez)**
+   - **Objetivo:** Es el puente de liquidez oficial que permite la entrada y salida de capital (Fiat ↔ Cripto) en el ecosistema.
+   - **Funciones:** Adquiere cripto con dinero real de Consumidores y Locales, y vende cripto por dinero real. Revisa aspectos de Compliance (KYC/AML).
+
+3. 🏪 **El Local (Comercio o Servicio)**
+   - **Objetivo:** Punto de aceptación de pagos que captura valor y recircula o liquida sus ganancias.
+   - **Funciones:** Genera facturas B2B, cobra a Consumidores usando terminales POS con códigos QR dinámicos nativos, y vende excedentes Cripto a Transaccionadores.
+
+---
+
+## 🛠️ ¿Cómo Probar la Aplicación? (Prueba Rápida)
+
+Para facilitar la evaluación de los jueces, se ha integrado un entorno de **"Demo Quick Login"**. Este entorno es **100% independiente del Backend** en caso de fallas de red durante la presentación, lo que garantiza una sesión indestructible y veloz.
+
+### Paso 1: Levantar el Entorno Local
+Abre tu terminal en la carpeta de este proyecto y ejecuta:
+```bash
+npm install
+npm run dev
 ```
+Dirígete a `http://localhost:5173/login`.
+
+### Paso 2: Iniciar Sesión Rápida
+Observarás tres botones coloreados encima del bloque de Login Manual ("Demo Quick Login").
+- No necesitas ingresar contraseñas.
+- Haz clic en **Consumidor** (Azul), **Transaccionador** (Morado) o **Local** (Verde).
+- El sistema forjará automáticamente credenciales seguras y te enviará a tu Dashboard específico donde verás tu Inicial de rol respectiva (C, T o L) en el menú lateral inferior.
+
+### Paso 3: Flujo de Pago a PDF (Prueba Core)
+Te recomendamos probar el flujo de Terminal Punto de Venta (POS) diseñado para los **Locales**:
+1. Haz clic en **Local** para iniciar sesión como Comerciante.
+2. En la barra lateral, haz clic en **POS Terminal** (el ícono en forma de tarjeta/factura).
+3. Introduce una cantidad bajo "Payment Amount" (*Ej: 50*).
+4. Introduce un texto descriptivo bajo "Internal Memo" (*Ej: Almuerzo*).
+5. Dale clic al botón azul **"Generate Terminal QR"**.
+6. Observarás a la derecha el código QR de pago Lightning.
+7. Simula la transacción exitosa pulsando el botón verde **"Simular Pago (Testing)"**.
+8. Automáticamente el puente detectará el cobro on-chain, mostrando la pantalla **"SETTLED"**.
+9. El QR cambiará de rol para ahora distribuir la factura; pulsa el gran botón amarillo **"VER PDF"**.
+10. Se abrirá el elegante comprobante electrónico nativo, donde los clientes pueden presionar **"Descargar PDF"** de manera instantánea o compartir el URL como enlace verificable.
 
 ---
 
-## 🧩 Modelo de Circulación Económica
+## 🌐 Producción y Despliegue (Vercel)
 
-El sistema opera bajo un modelo de tres roles con flujos específicos de dinero (Fiat) y activos (Cripto):
+El proyecto está configurado y optimizado (`npm run build` sin errores, linter limpio y reglas estrictas SPA) para desplegarse mediante plataformas serverless.
 
-### 1. 👤 El Consumidor
-- **Compra/Venta**: Puede comprar cripto con dinero real y vender sus criptos únicamente a los **Transaccionadores**.
-- **Gasto**: Puede gastar sus criptos exclusivamente en los **Locales**.
-- **Objetivo**: Usuario final que utiliza el sistema para ahorro e intercambio de bienes.
-
-### 2. ⚡ El Transaccionador (Agente de Liquidez)
-- **Compra**: Adquiere cripto con dinero real de otros Transaccionadores, Consumidores y Locales.
-- **Venta**: Vende cripto por dinero real a otros Transaccionadores y Consumidores.
-- **Objetivo**: Es el puente de liquidez que permite la entrada y salida de capital (Fiat <-> Cripto) en el sistema.
-
-### 3. 🏪 El Local (Comercio o Servicio)
-- **Gasto**: Puede pagar a otros Locales (B2B) usando cripto.
-- **Venta**: Solo puede vender sus criptos por dinero real a los **Transaccionadores**.
-- **Objetivo**: Punto de aceptación de pagos que recircula el valor dentro del ecosistema empresarial o liquida sus ganancias.
-
----
-
-## 🕹️ Guía de Funcionalidades: ¿Para qué sirve cada botón?
-
-### 📈 Terminal de Trading (`/app`)
-
-El motor de intercambio principal de la plataforma.
-
-#### Ticker Header
-Muestra el precio en vivo de BTC/USD, el cambio en 24h, máximos/mínimos y volúmenes institucionales.
-
-#### Tipos de Órdenes
-- **`Limit`** (Límite): Tú defines el precio. La orden se ejecuta solo si el mercado llega a ese punto.
-- **`Market`** (Mercado): Compra/vende instantáneamente al mejor precio disponible.
-- **`Stop-limit`** (Parada): Activa una orden límite cuando el precio toca un umbral de "disparo".
-
-#### Panel de Operación (TradePanel)
-- **`Comprar BTC`**: Envía una solicitud de compra. Debita USD y acredita BTC.
-- **`Vender BTC`**: Envía una solicitud de venta. Debita BTC y acredita USD.
-- **`Deslizador %`**: Llena automáticamente la cantidad usando el 25%, 50%, 75% o 100% de tu saldo disponible.
-
----
-
-### 📱 Terminal POS y Pagos QR (`/app/payments`)
-
-Diseñado para que los **Locales** acepten pagos cripto de forma física o digital.
-
-#### ¿Cómo se genera el código QR?
-1. **Configuración**: El comercio ingresa el monto (en USD, SATS o BTC).
-2. **Conversión**: El sistema convierte automáticamente:
-   - `1 USD → 1,587 SATS` (tasa fija de ejemplo).
-3. **Petición al Backend**: Al presionar **`Generar QR`**, se envía un `POST /payments/create`.
-4. **Generación de Invoice**: El servidor genera una factura **BOLT-11 de Lightning Network** (un string largo que empieza con `lnbc...`).
-5. **Renderizado**: El componente `QRPaymentCard` toma ese string y lo convierte en un código QR escaneable por cualquier billetera (Strike, Muun, Phoenix, etc.).
-
-#### Confirmación en Tiempo Real
-Una vez generado el QR, el sistema realiza una consulta (**polling**) cada 3 segundos al endpoint `GET /payments/{id}/status`. Si el pago se detecta en el nodo, la terminal avanza automáticamente a la pantalla de **Recibo**.
-
----
-
-### 🛡️ Cumplimiento y Seguridad (`/app/compliance`)
-
-#### KYT (Know Your Transaction)
-Analiza cada transacción entrante. Si una billetera es sospechosa, el sistema marca el riesgo como **Medio** o **Alto** (en rojo).
-
-#### ZK-Proof (Prueba de Inocencia)
-Si un pago es bloqueado, el usuario puede generar una **Prueba de Conocimiento Cero (Zero-Knowledge Proof)**. Esto genera un certificado criptográfico que demuestra el origen lícito de los fondos **sin revelar su identidad privada** ni datos sensibles a terceros.
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-src/
- ├─ api/                 # Cliente Axios con interceptores JWT
- ├─ components/
- ├─ features/
- │   ├─ auth/            # Registro, Login y Almacén de Sesión
- │   ├─ compliance/      # KYT y Pruebas ZK
- │   ├─ consumer/        # Dashboard de Consumidor
- │   ├─ landing/         # Landing Page moderna
- │   ├─ liquidity/       # Dashboard de Transaccionador
- │   ├─ merchant/        # Dashboard de Locales
- │   ├─ payments/        # Terminal POS y lógica de QR
- │   └─ shared/          # Mapa de flujo del sistema
- ├─ layouts/             # Envoltorios de navegación (Sidebar/Topbar)
- ├─ routes/              # Manejo de rutas y seguridad
- └─ types/               # Definiciones de TypeScript
-```
-
----
-
-## 🛠️ Instalación y Uso
-
-### Requisitos
-- Node.js `18+`
-- npm o yarn
-- PostgreSQL + Redis (Backend)
-
-### Pasos
-1. Clonar el repositorio.
-2. Ejecutar `npm install`.
-3. Configurar `.env` con la URL de la API.
-4. Ejecutar `npm run dev` para iniciar el servidor de desarrollo en `http://localhost:5173`.
-
----
-
-## 🛡️ Estándares del Proyecto
-
-- **Seguridad**: Máscara automática de claves secretas (`sk_test_••••`).
-- **Rendimiento**: Interfaz optimizada para pantallas desde 1024px hasta 4K.
-- **Tipado Estricto**: 100% de los datos estructurados con interfaces de TS.
-- **Código Limpio**: Auditoría completa realizada para eliminar archivos huérfanos y lógica duplicada.
+1. **Frontend:** 
+   Simplemente conéctalo a Vercel, ajusta las Variables de Entorno (`VITE_API_URL`) usando la plantilla `.env.example`, y el archivo `vercel.json` autogestionará el renderizado en `index.html` sin mostrar errores 404 al recargar pantallas de transacciones.
+2. **Backend:**
+   Tu API de NestJS ya posee un `vercel.json` con preconfiguración `@vercel/node` habilitando la infraestructura Serverless lista para recibir comandos Prisma a través del `postinstall`.

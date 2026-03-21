@@ -229,6 +229,17 @@ export function Payments() {
               <h2 className="text-[20px] font-black text-slate-50 uppercase tracking-wider">Settled</h2>
               <p className="text-[11px] text-slate-400 mt-1">Invoice confirmed on-chain</p>
             </div>
+
+            {/* INVOICE QR */}
+            <div className="bg-white p-3 rounded-xl mx-auto w-fit shadow-lg border-2 border-emerald-500/30">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`${window.location.origin}/invoice/${invoice?.id}`)}&bgcolor=ffffff&color=020617&margin=1`}
+                alt="Invoice QR"
+                className="w-[160px] h-[160px] rounded"
+              />
+            </div>
+            <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest mt-0">Escanea para descargar recibo</p>
+
             <div className="bg-slate-950 border border-slate-800 rounded p-4 space-y-2 text-left">
               <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400">Settlement</span>
@@ -240,8 +251,11 @@ export function Payments() {
               </div>
             </div>
             <div className="flex gap-3">
-              <button className="flex-1 py-2.5 bg-slate-800 border border-slate-800 text-slate-400 rounded text-[11px] font-bold hover:text-slate-50 transition-colors flex items-center justify-center gap-1.5">
-                <ReceiptText size={13} /> Receipt
+              <button 
+                onClick={() => window.open(`/invoice/${invoice?.id}`, '_blank')}
+                className="flex-1 py-2.5 bg-brand-yellow text-binance-black rounded text-[11px] font-black hover:bg-yellow-400 transition-colors flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(252,213,53,0.2)]"
+              >
+                <ReceiptText size={13} /> VER PDF
               </button>
               <button
                 onClick={reset}

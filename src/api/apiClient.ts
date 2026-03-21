@@ -49,6 +49,12 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
 
       if (refreshToken) {
+        // HACKATHON FALLBACK: Do not try to refresh or log out the demo session!
+        if (refreshToken === 'hackathon-demo-token') {
+          console.warn('Backend returned 401 for demo session, silencing interceptor to prevent logout loop');
+          return Promise.resolve({ data: { success: true, data: [] } }); // Mock successful empty response to prevent app crash
+        }
+
         try {
           // Use a fresh axios instance to avoid interceptor loops
           const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {

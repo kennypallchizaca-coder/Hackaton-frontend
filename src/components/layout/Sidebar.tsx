@@ -123,10 +123,11 @@ export function Sidebar() {
       {/* Role Indicator */}
       <div className="mb-4 flex flex-col items-center gap-1 group relative">
         <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-[10px] font-black text-blue-500 uppercase tracking-tighter">
-          {user?.role === 'consumer' ? 'C' : user?.role === 'transaccionador' ? 'T' : 'L'}
+          {user?.role === 'admin' ? 'A' : user?.role === 'consumer' ? 'C' : user?.role === 'transaccionador' ? 'T' : 'L'}
         </div>
         <span className="absolute left-14 bg-blue-600 text-white text-[9px] font-black px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-50 uppercase tracking-widest">
-          {user?.role === 'consumer' ? 'Consumidor' : 
+          {user?.role === 'admin' ? 'Admin' : 
+           user?.role === 'consumer' ? 'Consumidor' : 
            user?.role === 'transaccionador' ? 'Transaccionador' : 
            'Local'}
         </span>

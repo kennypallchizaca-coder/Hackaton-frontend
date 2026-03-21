@@ -7,6 +7,7 @@ import { Settings } from '../features/settings';
 import { Compliance } from '../features/compliance';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import LandingPage from '../features/landing/pages/LandingPage';
+import { InvoicePage } from '../features/payments/pages/InvoicePage';
 
 export function AppRoutes() {
   return (
@@ -16,6 +17,7 @@ export function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/invoice/:id" element={<InvoicePage />} />
 
         {/* Protected app routes */}
         <Route

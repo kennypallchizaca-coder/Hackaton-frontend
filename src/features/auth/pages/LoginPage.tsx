@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff } from '../../../components/common/Icons';
+import { Eye, EyeOff, User, Store, Shield } from '../../../components/common/Icons';
 import { useAuthStore } from '../store/authStore';
+
+const DEMO_ACCOUNTS = [
+  { role: 'Consumidor', email: 'consumer@demo.com', password: 'password123', icon: User, color: 'hover:border-blue-500 hover:text-blue-400' },
+  { role: 'Transaccionador', email: 'agent@demo.com', password: 'Agent1234', icon: Shield, color: 'hover:border-purple-500 hover:text-purple-400' },
+  { role: 'Local', email: 'owner@demo.ec', password: 'Owner1234', icon: Store, color: 'hover:border-emerald-500 hover:text-emerald-400' }
+];
 
 
 export function Login() {
@@ -66,7 +72,48 @@ export function Login() {
                 <p className="text-slate-400 font-medium">Glad you’re back.!</p>
               </div>
 
-              <form onSubmit={handleLogin} className="space-y-8">
+              {/* DEMO QUICK LOGIN */}
+              <div className="space-y-3 pt-2">
+                <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 border-b border-white/10 pb-2">Demo Quick Login</p>
+                <div className="flex gap-2">
+                  {DEMO_ACCOUNTS.map((acc) => {
+                    const Icon = acc.icon;
+                    return (
+                      <button
+                        key={acc.role}
+                        type="button"
+                        disabled={isLoading}
+                        onClick={async () => {
+                          setEmail(acc.email);
+                          setPassword(acc.password);
+                          setError('');
+                          try {
+                            await login(acc.email, acc.password);
+                            navigate('/app');
+                          } catch {
+                            setError('Error en cuenta demo');
+                          }
+                        }}
+                        className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border border-white/10 bg-white/5 transition-all outline-none ${acc.color} group disabled:opacity-50`}
+                      >
+                        <Icon size={18} className="text-slate-400 group-hover:text-inherit transition-colors" />
+                        <span className="text-[10px] font-bold text-slate-300 group-hover:text-inherit transition-colors">{acc.role}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-slate-900/50 text-[10px] font-medium text-slate-500 rounded backdrop-blur-sm tracking-widest uppercase">O ingresa manualmente</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-6">
                   <input
                     type="email"
