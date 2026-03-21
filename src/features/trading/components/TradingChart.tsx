@@ -120,6 +120,7 @@ export function TradingChart() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
+                tickFormatter={(val) => val.toFixed(2)}
                 width={50}
               />
               <Tooltip
@@ -146,7 +147,7 @@ export function TradingChart() {
 
         {/* Current price tag */}
         <div className="absolute right-[50px] top-[40%] bg-emerald-500 text-slate-900 text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg pointer-events-none z-10 whitespace-nowrap">
-          {lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          {lastPrice.toFixed(2)}
         </div>
       </div>
 

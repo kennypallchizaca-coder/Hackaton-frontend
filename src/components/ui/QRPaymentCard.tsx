@@ -225,7 +225,10 @@ export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
 
       {status === 'pending' && (
         <button
-          onClick={() => paymentService.simulatePayment(invoice.id)}
+          onClick={() => {
+            paymentService.simulatePayment(invoice.id);
+            setStatus('paid');
+          }}
           className="mt-2 w-full rounded-lg border border-emerald-500/20 bg-emerald-500/10 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-500 transition-all hover:bg-emerald-500 hover:text-slate-950"
         >
           Simular Pago (Testing)

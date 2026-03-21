@@ -77,6 +77,10 @@ export const paymentService = {
         currency: 'BTC',
       });
 
+      if (!data || !data.id) {
+        throw new Error('Invalid response from backend (missing invoice ID)');
+      }
+
       return persistInvoice(
         toInvoice(data, {
           amountSats,
@@ -134,8 +138,11 @@ export const paymentService = {
       localStorage.setItem('mock_paid_invoices', JSON.stringify([...mockPaid, invoiceId]));
     }
     updateStoredInvoiceStatus(invoiceId, 'paid');
-    // Trigger storage event to notify listeners (like PaymentsPage polling)
+    
+    // Trigger storage event to notify other tabs/listeners
     window.dispatchEvent(new Event('storage'));
+    // Trigger custom event for immediate UI update in the same tab
+    window.dispatchEvent(new CustomEvent('payment-simulated', { detail: { invoiceId, status: 'paid' } }));
   },
 
   regenerateInvoice: async (original: Invoice): Promise<Invoice> => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '../../../utils/cn';
 import { useAuthStore } from '../../auth/store/authStore';
 import Button from '../../../components/ui/button';
@@ -34,6 +34,35 @@ export function TradePanel() {
 
       alert(`✅ Operación exitosa:\n${type === 'buy' ? 'Compra' : 'Venta'} de ${amount} BTC procesada correctamente en la red institucional.`);
     }, 1500);
+  };
+
+  // Auto-calculation logic
+  useEffect(() => {
+    if (price && amount && !total) {
+      const calculatedTotal = (parseFloat(price) * parseFloat(amount)).toFixed(2);
+      setTotal(calculatedTotal);
+    }
+  }, [price, amount]);
+
+  const handlePriceChange = (val: string) => {
+    setPrice(val);
+    if (val && amount) {
+      setTotal((parseFloat(val) * parseFloat(amount)).toFixed(2));
+    }
+  };
+
+  const handleAmountChange = (val: string) => {
+    setAmount(val);
+    if (val && price) {
+      setTotal((parseFloat(price) * parseFloat(val)).toFixed(2));
+    }
+  };
+
+  const handleTotalChange = (val: string) => {
+    setTotal(val);
+    if (val && price && parseFloat(price) !== 0) {
+      setAmount((parseFloat(val) / parseFloat(price)).toFixed(8));
+    }
   };
 
   const isConsumer = user?.role === 'consumer';
@@ -134,7 +163,7 @@ export function TradePanel() {
                 <span>{getFiatBalanceLabel()}</span>
                 <button className="bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition-colors text-[10px] w-[14px] h-[14px] flex items-center justify-center rounded-full font-bold leading-none">+</button>
               </div>
-              <span className="text-slate-50 font-medium">9,500.05 {isConsumer ? 'USD' : 'USDT'}</span>
+              <span className="text-slate-50 font-medium">{(user?.balance?.fiat ?? 9500.05).toLocaleString()} {isConsumer ? 'USD' : 'USDT'}</span>
             </div>
 
             <div className="space-y-4">
@@ -142,7 +171,7 @@ export function TradePanel() {
                 <Input
                   label="Price"
                   value={price}
-                  onChange={(e: any) => setPrice(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePriceChange(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
                 <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
@@ -152,7 +181,7 @@ export function TradePanel() {
                 <Input
                   label="Amount"
                   value={amount}
-                  onChange={(e: any) => setAmount(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleAmountChange(e.target.value)}
                   placeholder="0.00"
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
@@ -180,7 +209,7 @@ export function TradePanel() {
                 <Input
                   label="Total"
                   value={total}
-                  onChange={(e: any) => setTotal(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTotalChange(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
                 <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
@@ -205,7 +234,7 @@ export function TradePanel() {
                 <span>{getCryptoBalanceLabel()}</span>
                 <button className="bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition-colors text-[10px] w-[14px] h-[14px] flex items-center justify-center rounded-full font-bold leading-none">+</button>
               </div>
-              <span className="text-slate-50 font-medium">{isMerchant ? '0.4728 BTC' : '0.4177 BTC'}</span>
+              <span className="text-slate-50 font-medium">{isMerchant ? (user?.balance?.crypto ?? 0.4728).toFixed(4) : (user?.balance?.crypto ?? 0.4177).toFixed(4)} BTC</span>
             </div>
 
             <div className="space-y-4">
@@ -213,7 +242,7 @@ export function TradePanel() {
                 <Input
                   label="Price"
                   value={price}
-                  onChange={(e: any) => setPrice(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePriceChange(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
                 <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>
@@ -223,7 +252,7 @@ export function TradePanel() {
                 <Input
                   label="Amount"
                   value={amount}
-                  onChange={(e: any) => setAmount(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleAmountChange(e.target.value)}
                   placeholder="0.00"
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
@@ -251,7 +280,7 @@ export function TradePanel() {
                 <Input
                   label="Total"
                   value={total}
-                  onChange={(e: any) => setTotal(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTotalChange(e.target.value)}
                   className="pr-10 text-right font-medium text-[12px] h-10"
                 />
                 <span className="absolute right-3 top-[30px] text-[10px] font-bold text-slate-400">USD</span>

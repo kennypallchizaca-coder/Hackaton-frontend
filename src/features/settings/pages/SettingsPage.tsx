@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Settings as SettingsIcon, User, Bell, Shield, Wallet, Check, Eye, EyeOff, Copy } from '../../../components/common/Icons';
 import { cn } from '../../../utils/cn';
 import { SEO } from '../../../components/common/SEO';
+import { useAuthStore } from '../../auth/store/authStore';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'billing';
 
@@ -12,11 +13,16 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'billing', label: 'Plan & Billing' },
 ];
 
-function FormField({ label, value, type = 'text', mono = false, readOnly = false }: {
+function FormField({ label, value: initialValue, type = 'text', mono = false, readOnly = false }: {
   label: string; value?: string; type?: string; mono?: boolean; readOnly?: boolean;
 }) {
+  const [value, setValue] = useState(initialValue || '');
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setValue(initialValue || '');
+  }, [initialValue]);
   const handleCopy = () => {
     navigator.clipboard.writeText(value ?? '');
     setCopied(true);
@@ -28,7 +34,8 @@ function FormField({ label, value, type = 'text', mono = false, readOnly = false
       <div className="relative flex items-center">
         <input
           type={type === 'password' ? (show ? 'text' : 'password') : type}
-          defaultValue={value}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           readOnly={readOnly}
           className={cn(
             "w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-[12px] text-slate-50 outline-none focus:border-blue-500 transition-colors",
@@ -70,6 +77,7 @@ function Toggle({ label, description, defaultChecked = false }: { label: string;
 }
 
 export function Settings() {
+  const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [saved, setSaved] = useState(false);
 
@@ -127,12 +135,12 @@ export function Settings() {
                   <span className="text-[12px] font-bold">Business Configuration</span>
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-4">
-                  <FormField label="Merchant Legal Name" value="KuriPay EC Demo" />
+                  <FormField label="Merchant Legal Name" value={user?.name || "KuriPay EC Demo"} />
                   <FormField label="Tax ID / RUC" value="1792345678001" mono />
                   <FormField label="Headquarters City" value="Quito" />
                   <FormField label="Region / Province" value="Pichincha" />
                   <div className="col-span-2">
-                    <FormField label="Primary Contact Email" value="merchant@kuripay.ec" type="email" />
+                    <FormField label="Primary Contact Email" value={user?.email || "merchant@kuripay.ec"} type="email" />
                   </div>
                 </div>
               </div>

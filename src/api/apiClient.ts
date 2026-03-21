@@ -51,8 +51,13 @@ apiClient.interceptors.response.use(
       if (refreshToken) {
         // HACKATHON FALLBACK: Do not try to refresh or log out the demo session!
         if (refreshToken === 'hackathon-demo-token') {
-          console.warn('Backend returned 401 for demo session, silencing interceptor to prevent logout loop');
-          return Promise.resolve({ data: { success: true, data: [] } }); // Mock successful empty response to prevent app crash
+          if (originalRequest.method?.toUpperCase() === 'GET') {
+            console.warn('Backend returned 401 for demo session (GET), silencing interceptor to prevent logout loop');
+            return Promise.resolve({ data: { success: true, data: [] } }); // Mock successful empty response to prevent app crash
+          }
+          // For POST/PUT/DELETE, we want the error to propagate so the caller can handle fallbacks
+          console.warn(`Backend returned 401 for demo session (${originalRequest.method}), allowing error to propagate for caller fallback`);
+          return Promise.reject(error);
         }
 
         try {

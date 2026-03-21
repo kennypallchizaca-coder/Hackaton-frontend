@@ -93,9 +93,20 @@ export function Payments() {
     };
 
     const interval = window.setInterval(poll, 3000);
+
+    // Listen for storage events (updates from other tabs) or custom simulation events
+    const handleImmediateUpdate = () => {
+      poll();
+    };
+
+    window.addEventListener('storage', handleImmediateUpdate);
+    window.addEventListener('payment-simulated' as any, handleImmediateUpdate);
+
     return () => {
       isSubscribed = false;
       window.clearInterval(interval);
+      window.removeEventListener('storage', handleImmediateUpdate);
+      window.removeEventListener('payment-simulated' as any, handleImmediateUpdate);
     };
   }, [step, invoice?.id]);
 
