@@ -7,25 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Binance-inspired Palette
-        'brand-yellow': '#FCD535',
-        'binance-black': '#0B0E11',
-        'binance-gray': '#1E2329',
-        'binance-border': '#2B3139',
-        'binance-text': '#EAECEF',
-        'binance-muted': '#848E9C',
-        'binance-green': '#0ECB81',
-        'binance-red': '#F6465D',
+        // Institutional Navy Palette
+        'brand-yellow': '#3b82f6', // Mapped to blue-500 for backwards compatibility
+        'binance-black': '#0f172a', // Slate 900
+        'binance-gray': '#1e293b', // Slate 800
+        'binance-border': '#334155', // Slate 700
+        'binance-text': '#f8fafc', // Slate 50
+        'binance-muted': '#94a3b8', // Slate 400
+        'binance-green': '#10b981', // Emerald 500
+        'binance-red': '#ef4444', // Red 500
         
         // Semantic Mappings
-        'bg-dark': '#0B0E11',
-        'bg-card': '#1E2329',
-        'accent-gold': '#FCD535',
-        'status-success': '#0ECB81',
-        'status-error': '#F6465D',
+        'bg-dark': '#0f172a',
+        'bg-card': '#1e293b',
+        'accent-gold': '#3b82f6',
+        'status-success': '#10b981',
+        'status-error': '#ef4444',
       },
       fontFamily: {
-        'inter': ['Inter', 'sans-serif'],
+        'sans': ['IBM Plex Sans', 'Inter', 'sans-serif'],
       },
       boxShadow: {
         'binance': '0 4px 20px rgba(0, 0, 0, 0.4)',

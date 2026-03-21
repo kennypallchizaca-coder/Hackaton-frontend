@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from '../components/Sidebar';
-import { Topbar } from '../components/Topbar';
+import { Sidebar } from '../components/layout/Sidebar';
+import { Topbar } from '../components/layout/Topbar';
 import { useLocation } from 'react-router-dom';
 
 // The trading dashboard needs full-height overflow-hidden layout
@@ -12,7 +12,7 @@ export function DashboardLayout() {
   const isTrading = TRADING_ROUTES.includes(location.pathname);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#060E1E] font-inter">
+    <div className="flex h-screen overflow-hidden bg-slate-950 font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col pl-14 min-w-0 overflow-hidden">
         <Topbar />

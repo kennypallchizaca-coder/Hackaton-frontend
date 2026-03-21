@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Copy, RefreshCw, CheckCircle2, Clock, XCircle, Zap } from '../Icons';
+import { Copy, RefreshCw, CheckCircle2, Clock, XCircle, Zap } from '../common/Icons';
 import { type Invoice, type PaymentStatus } from '../../types';
 import { cn } from '../../utils/cn';
 
 interface QRPaymentCardProps {
   invoice: Invoice;
   onRegenerate: () => void;
-  onPaymentConfirmed?: () => void;
 }
 
 const statusConfig: Record<PaymentStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
@@ -42,7 +41,7 @@ const statusConfig: Record<PaymentStatus, { label: string; color: string; icon: 
   }
 };
 
-export function QRPaymentCard({ invoice, onRegenerate, onPaymentConfirmed }: QRPaymentCardProps) {
+export function QRPaymentCard({ invoice, onRegenerate }: QRPaymentCardProps) {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [status, setStatus] = useState<PaymentStatus>(invoice.status);
@@ -66,15 +65,8 @@ export function QRPaymentCard({ invoice, onRegenerate, onPaymentConfirmed }: QRP
     return () => clearInterval(interval);
   }, [invoice.expiresAt, status]);
 
-  // Simulate payment detection after 8 seconds for demo
-  useEffect(() => {
-    if (status !== 'pending') return;
-    const timeout = setTimeout(() => {
-      setStatus('paid');
-      onPaymentConfirmed?.();
-    }, 8000);
-    return () => clearTimeout(timeout);
-  }, [invoice.id, status, onPaymentConfirmed]);
+  // Payment detection is handled by the parent/service via polling or SSE
+  // removing simulated timeout to ensure 100% real backend integration
 
   const handleCopy = useCallback(() => {
     const text = invoice.lightningInvoice || '';
@@ -126,29 +118,29 @@ export function QRPaymentCard({ invoice, onRegenerate, onPaymentConfirmed }: QRP
           <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" className="rounded-lg">
             <rect width="240" height="240" fill="white"/>
             {/* Finders */}
-            <rect x="10" y="10" width="60" height="60" rx="4" fill="#0B0E11"/>
+            <rect x="10" y="10" width="60" height="60" rx="4" fill="#020617"/>
             <rect x="16" y="16" width="48" height="48" rx="2" fill="white"/>
-            <rect x="22" y="22" width="36" height="36" rx="1" fill="#0B0E11"/>
+            <rect x="22" y="22" width="36" height="36" rx="1" fill="#020617"/>
             
-            <rect x="170" y="10" width="60" height="60" rx="4" fill="#0B0E11"/>
+            <rect x="170" y="10" width="60" height="60" rx="4" fill="#020617"/>
             <rect x="176" y="16" width="48" height="48" rx="2" fill="white"/>
-            <rect x="182" y="22" width="36" height="36" rx="1" fill="#0B0E11"/>
+            <rect x="182" y="22" width="36" height="36" rx="1" fill="#020617"/>
             
-            <rect x="10" y="170" width="60" height="60" rx="4" fill="#0B0E11"/>
+            <rect x="10" y="170" width="60" height="60" rx="4" fill="#020617"/>
             <rect x="16" y="176" width="48" height="48" rx="2" fill="white"/>
-            <rect x="22" y="182" width="36" height="36" rx="1" fill="#0B0E11"/>
+            <rect x="22" y="182" width="36" height="36" rx="1" fill="#020617"/>
             
             {/* Random pixels */}
             {[80,90,100,110,120,130,140,150,160].map((x) =>
               [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220].map((y) => {
                 const seed = (x * 17 + y * 9 + currentAmountSats) % 4;
-                return seed === 0 ? <rect key={`${x}${y}`} x={x} y={y} width="8" height="8" rx="1" fill="#0B0E11"/> : null;
+                return seed === 0 ? <rect key={`${x}${y}`} x={x} y={y} width="8" height="8" rx="1" fill="#020617"/> : null;
               })
             )}
             
             {/* Center Logo */}
-            <circle cx="120" cy="120" r="22" fill="#FCD535" stroke="white" strokeWidth="4"/>
-            <path d="M128 110 L114 124 L122 124 L112 134 L122 118 L116 118 Z" fill="#0B0E11" transform="scale(1.2) translate(-20, -20)"/>
+            <circle cx="120" cy="120" r="22" fill="#3b82f6" stroke="white" strokeWidth="4"/>
+            <path d="M128 110 L114 124 L122 124 L112 134 L122 118 L116 118 Z" fill="#020617" transform="scale(1.2) translate(-20, -20)"/>
           </svg>
         </div>
       </div>

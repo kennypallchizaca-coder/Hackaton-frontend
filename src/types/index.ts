@@ -1,39 +1,25 @@
-/**
- * Comprehensive Type Definitions for KuriPay Frontend
- * Aligned with the NestJS Backend DTOs and existing UI components
- */
-
-export type UserRole = 'admin' | 'merchant_owner' | 'cashier' | 'auditor';
+export type UserRole = 'consumer' | 'liquidity_agent' | 'merchant' | 'admin';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  merchantId?: string;
-  status: 'active' | 'inactive';
+  merchantId?: string; // For merchant role
+  agentId?: string;    // For agent role
+  status: 'active' | 'inactive' | 'pending';
   avatarUrl?: string;
   createdAt: string;
+  balance: {
+    fiat: number;
+    crypto: number;
+  };
 }
 
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-}
-
-export interface Merchant {
-  id: string;
-  name: string;
-  country: string;
-  taxId: string;
-  status: 'active' | 'pending' | 'suspended';
-}
-
-export interface Branch {
-  id: string;
-  name: string;
-  address: string;
 }
 
 export interface PaymentOrder {
@@ -56,15 +42,20 @@ export type PaymentStatus = PaymentOrder['status'];
 export interface Transaction {
   id: string;
   date: string;
-  store: string;
+  senderId: string;
+  receiverId: string;
+  senderRole: UserRole;
+  receiverRole: UserRole;
   amountBTC: string;
   amountUSD: number;
-  status: 'completed' | 'processing' | 'failed' | 'success'; 
-  network?: string; // Added for Transactions.tsx
-  compliance?: {
-    kytRisk: 'Low' | 'Medium' | 'High';
-    score: number;
-    disputed?: boolean; // Added for Compliance.tsx
+  feeUSD: number;
+  type: 'buy_crypto' | 'sell_crypto' | 'merchant_payment' | 'inter_merchant_payment' | 'fiat_bridge';
+  status: 'completed' | 'processing' | 'failed' | 'paid' | 'expired';
+  compliance: {
+    riskScore: number;
+    riskLevel: 'Low' | 'Medium' | 'High';
+    evidenceUrl?: string;
+    kytStatus: 'clean' | 'flagged' | 'manual_review';
   };
 }
 
@@ -114,7 +105,8 @@ export interface DailySummary {
   date: string;
   totalVolume: number;
   transactionCount: number;
-  topBranch: string;
+  topBranch?: string;
+  activeAgents?: number;
   // Added back for AIInsights.tsx compatibility
   totalTransactions?: number;
   successRate?: number;
@@ -138,8 +130,13 @@ export interface ComplianceCheck {
   createdAt: string;
 }
 
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success: boolean;
+export interface LiquidityOrder {
+  id: string;
+  agentId: string;
+  type: 'buy' | 'sell';
+  amountBTC: string;
+  rateUSD: number;
+  minAmountUSD: number;
+  maxAmountUSD: number;
+  status: 'active' | 'filled' | 'cancelled';
 }

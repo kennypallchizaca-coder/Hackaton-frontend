@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../utils/cn";
 
 const Loader2: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -29,7 +29,7 @@ type ButtonVariant =
   | "link";
 type ButtonSize = "default" | "sm" | "lg";
 
-export interface ButtonProps
+interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
