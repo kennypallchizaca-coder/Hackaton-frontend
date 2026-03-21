@@ -160,8 +160,8 @@ export function Settings() {
                   <span className="text-[12px] font-bold">API Credentials</span>
                 </div>
                 <div className="p-4 space-y-4">
-                  <FormField label="Public Key" value="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxx" mono readOnly />
-                  <FormField label="Secret Key" value="sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxx" type="password" mono />
+                  <FormField label="Public Key" value={import.meta.env.VITE_STRIPE_PUBLIC_KEY || "pk_test_placeholder"} mono readOnly />
+                  <FormField label="Secret Key" value={import.meta.env.VITE_STRIPE_SECRET_KEY || "sk_test_placeholder"} type="password" mono />
                   <FormField label="Webhook URL" value="https://yourdomain.com/webhooks/kuripay" mono />
                   <div className="pt-2 flex gap-3">
                     <button className="px-4 py-2 bg-[#F6465D]/10 border border-[#F6465D]/30 text-[#F6465D] rounded text-[11px] font-bold hover:bg-[#F6465D]/20 transition-colors">
