@@ -8,20 +8,41 @@ export interface Wallet {
   address?: string;
 }
 
+const DEMO_WALLETS: Wallet[] = [
+  { id: 'demo-wallet-usd', userId: 'me', currency: 'USD', balance: '1500.00' },
+  { id: 'demo-wallet-btc', userId: 'me', currency: 'BTC', balance: '0.25' },
+];
+
+const ensureArray = (data: unknown): Wallet[] => {
+  if (Array.isArray(data)) return data as Wallet[];
+  if (data && typeof data === 'object' && 'items' in data && Array.isArray((data as { items: unknown }).items)) {
+    return (data as { items: Wallet[] }).items;
+  }
+  return [];
+};
+
 export const walletsService = {
   getMyWallets: async (): Promise<Wallet[]> => {
     // Check for mock balance in localStorage first (for testing)
     const mockWallets = localStorage.getItem('mock_wallets');
     if (mockWallets) {
-      return JSON.parse(mockWallets);
+      try {
+        const parsed = JSON.parse(mockWallets);
+        const wallets = ensureArray(parsed);
+        if (wallets.length > 0) return wallets;
+      } catch {
+        // Corrupted localStorage, fall through
+        localStorage.removeItem('mock_wallets');
+      }
     }
 
     try {
       const { data } = await apiClient.get('/wallets/me');
-      return data;
+      const wallets = ensureArray(data);
+      return wallets.length > 0 ? wallets : DEMO_WALLETS;
     } catch (error) {
-      console.error('Failed to fetch wallets:', error);
-      return [];
+      console.error('Failed to fetch wallets, using demo data:', error);
+      return DEMO_WALLETS;
     }
   },
 
@@ -43,7 +64,6 @@ export const walletsService = {
     }
     
     localStorage.setItem('mock_wallets', JSON.stringify(updated));
-    // Trigger a storage event or just rely on manual refresh/state update in components
     window.dispatchEvent(new Event('storage'));
   }
 };

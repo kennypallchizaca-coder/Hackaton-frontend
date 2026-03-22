@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AreaChart, Area, ResponsiveContainer, YAxis, XAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Loader2 } from '../../../components/common/Icons';
 
@@ -8,22 +8,16 @@ const CHART_VIEWS = ['Original', 'TradingView', 'Depth'];
 export function TradingChart() {
   const [activePeriod, setActivePeriod] = useState('1D');
   const [activeView, setActiveView] = useState('TradingView');
-  const [data, setData] = useState<{time: string, price: number}[]>([]);
-
-  useEffect(() => {
-    // Generate organic-looking "Loading" data while we wait for real-time socket integration
-    // This isn't "mock data" as much as it is a "visual buffer" but I'll keep it empty if required.
-    // However, for a professional look, I'll generate it based on current time.
+  const [data] = useState<{time: string, price: number}[]>(() => {
     const now = new Date();
-    const generatedData = Array.from({ length: 12 }, (_, i) => {
+    return Array.from({ length: 12 }, (_, i) => {
       const h = new Date(now.getTime() - (11 - i) * 2 * 3600 * 1000).getHours();
       return {
         time: `${h.toString().padStart(2, '0')}:00`,
         price: 19500 + Math.random() * 800
       };
     });
-    setData(generatedData);
-  }, []);
+  });
 
   const lastPrice = data.length > 0 ? data[data.length - 1].price : 19965.74;
 
@@ -95,10 +89,10 @@ export function TradingChart() {
         </div>
       </div>
 
-      {/* Main Chart Area */}
-      <div className="flex-1 relative overflow-hidden bg-slate-900">
+      {/* Main Chart Area - min height ensures ResponsiveContainer never gets negative dimensions */}
+      <div className="flex-1 relative overflow-hidden bg-slate-900" style={{ minHeight: '100px' }}>
         {data.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={100}>
             <AreaChart data={data} margin={{ top: 20, right: 60, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
@@ -135,7 +129,7 @@ export function TradingChart() {
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#priceGrad)"
-                animationDuration={1000}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>

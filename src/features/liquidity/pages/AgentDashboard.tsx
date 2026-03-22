@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '../../auth/store/authStore';
 import { TransactionTable } from '../../shared/components/TransactionTable';
 import { SEO } from '../../../components/common/SEO';
@@ -6,7 +6,7 @@ import { transactionService } from '../../trading/api/transactionService';
 import { liquidityService } from '../api/liquidityService';
 import { walletsService, type Wallet } from '../../wallets/api/walletsService';
 import { complianceService } from '../../compliance/api/complianceService';
-import { type Transaction, type LiquidityOrder } from '../../../types';
+import { type Transaction, type LiquidityOrder, type KYTAlert } from '../../../types';
 import { SystemFlowMap } from '../../shared/components/SystemFlowMap';
 import { cn } from '../../../utils/cn';
 import Button from '../../../components/ui/button';
@@ -23,11 +23,11 @@ export function AgentDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [orders, setOrders] = useState<LiquidityOrder[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<KYTAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('node');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [txs, ords, wls, kytAlerts] = await Promise.all([
@@ -45,15 +45,11 @@ export function AgentDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) fetchData();
-    
-    // Listen for mock updates
-    window.addEventListener('storage', fetchData);
-    return () => window.removeEventListener('storage', fetchData);
-  }, [user]);
+  }, [user?.id, fetchData]);
 
   const handleAddFakeFunds = async () => {
     await walletsService.addMockFunds('USD', 5000);
@@ -188,12 +184,12 @@ export function AgentDashboard() {
                   <h4 className="text-red-500 text-[11px] font-black uppercase tracking-widest mb-4 border-b border-red-500/20 pb-2">Compliance KYT/AML System</h4>
                   {alerts.length > 0 ? alerts.map((alert, i) => (
                     <div key={i} className="text-[11px] flex items-start gap-3 bg-slate-900 p-4 border border-slate-800">
-                      <div className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0", alert.severity === 'high' ? 'bg-red-500' : 'bg-blue-500')} />
+                      <div className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0", alert.riskLevel === 'High' ? 'bg-red-500' : 'bg-blue-500')} />
                       <div>
-                        <p className="text-slate-50 font-bold leading-tight mb-1">{alert.message || alert.type}</p>
+                        <p className="text-slate-50 font-bold leading-tight mb-1">{alert.reason}</p>
                         <div className="flex gap-3">
-                          <span className="text-slate-400 text-[9px] uppercase font-black">Ref: {alert.id?.slice(0, 8) || 'TX-AUTH'}</span>
-                          <span className="text-slate-500 text-[9px] uppercase font-black">Priority: {alert.severity || 'LOW'}</span>
+                          <span className="text-slate-400 text-[9px] uppercase font-black">Ref: {alert.txId?.slice(0, 8) || 'TX-AUTH'}</span>
+                          <span className="text-slate-500 text-[9px] uppercase font-black">Risk: {alert.riskLevel || 'LOW'}</span>
                         </div>
                       </div>
                     </div>

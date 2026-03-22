@@ -2,10 +2,11 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Topbar } from '../components/layout/Topbar';
 import { useLocation } from 'react-router-dom';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 
 // The trading dashboard needs full-height overflow-hidden layout
 // All other pages need overflow-y-auto (scrollable)
-const TRADING_ROUTES = ['/'];
+const TRADING_ROUTES = ['/app'];
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -17,7 +18,9 @@ export function DashboardLayout() {
       <div className="flex-1 flex flex-col pl-14 min-w-0 overflow-hidden">
         <Topbar />
         <main className={`flex-1 ${isTrading ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

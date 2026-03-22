@@ -100,13 +100,13 @@ export function Payments() {
     };
 
     window.addEventListener('storage', handleImmediateUpdate);
-    window.addEventListener('payment-simulated' as any, handleImmediateUpdate);
+    window.addEventListener('payment-simulated', handleImmediateUpdate);
 
     return () => {
       isSubscribed = false;
       window.clearInterval(interval);
       window.removeEventListener('storage', handleImmediateUpdate);
-      window.removeEventListener('payment-simulated' as any, handleImmediateUpdate);
+      window.removeEventListener('payment-simulated', handleImmediateUpdate);
     };
   }, [step, invoice?.id]);
 

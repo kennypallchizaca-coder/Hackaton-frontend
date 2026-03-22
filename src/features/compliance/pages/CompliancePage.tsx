@@ -52,11 +52,14 @@ export function Compliance() {
     setGenerating(false);
   };
 
-  useEffect(() => {
+  const [prevAtRiskTxs, setPrevAtRiskTxs] = useState<Transaction[]>([]);
+
+  if (atRiskTxs !== prevAtRiskTxs) {
+    setPrevAtRiskTxs(atRiskTxs);
     if (atRiskTxs.length > 0 && selectedTxId === 'tx_3a1b9c') {
       setSelectedTxId(atRiskTxs[0].id);
     }
-  }, [atRiskTxs, selectedTxId]);
+  }
 
   return (
     <div className="min-h-full bg-slate-950 text-slate-50">

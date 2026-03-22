@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '../../auth/store/authStore';
 import { BalanceCard } from '../components/BalanceCard';
 import { TransactionTable } from '../../shared/components/TransactionTable';
@@ -21,7 +21,7 @@ export function ConsumerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [txs, wls] = await Promise.all([
@@ -35,15 +35,13 @@ export function ConsumerDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user) fetchData();
-    
-    // Listen for mock updates
-    window.addEventListener('storage', fetchData);
-    return () => window.removeEventListener('storage', fetchData);
-  }, [user]);
+    if (user) {
+      fetchData();
+    }
+  }, [user?.id, fetchData]);
 
   const handleAddFakeFunds = async () => {
     await walletsService.addMockFunds('USD', 1000);

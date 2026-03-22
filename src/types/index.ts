@@ -77,7 +77,7 @@ export interface AuditEntry {
   actor: string;
   action: string;
   result: 'success' | 'warning' | 'error';
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface SelectiveDisclosurePayload {

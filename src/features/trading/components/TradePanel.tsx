@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '../../../utils/cn';
 import { useAuthStore } from '../../auth/store/authStore';
 import Button from '../../../components/ui/button';
@@ -36,13 +36,6 @@ export function TradePanel() {
     }, 1500);
   };
 
-  // Auto-calculation logic
-  useEffect(() => {
-    if (price && amount && !total) {
-      const calculatedTotal = (parseFloat(price) * parseFloat(amount)).toFixed(2);
-      setTotal(calculatedTotal);
-    }
-  }, [price, amount]);
 
   const handlePriceChange = (val: string) => {
     setPrice(val);

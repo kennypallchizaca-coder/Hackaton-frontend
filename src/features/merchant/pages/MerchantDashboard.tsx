@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '../../auth/store/authStore';
 import { SEO } from '../../../components/common/SEO';
 import { transactionService } from '../../trading/api/transactionService';
@@ -23,7 +23,7 @@ export function MerchantDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
@@ -45,13 +45,11 @@ export function MerchantDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     fetchData();
-    window.addEventListener('storage', fetchData);
-    return () => window.removeEventListener('storage', fetchData);
-  }, [user]);
+  }, [fetchData]);
 
   const handleAddFakeFunds = async () => {
     await walletsService.addMockFunds('USD', 2000);

@@ -7,23 +7,45 @@ export const transactionService = {
       const { data } = await apiClient.get('/transactions');
       // Backend returns pagination matching standard NestJS patterns
       // Mapping backend transactions to frontend Transaction type
-      const items = Array.isArray(data) ? data : data.items || [];
-      return items.map((tx: any) => ({
+      const items = (Array.isArray(data) ? data : data?.items || []) as Array<{
+        id: string;
+        createdAt?: string;
+        date?: string;
+        senderUserId?: string;
+        senderId?: string;
+        receiverUserId?: string;
+        receiverId?: string;
+        senderRole?: string;
+        receiverRole?: string;
+        amountCrypto?: string;
+        amountBTC?: string;
+        amountFiat?: number;
+        amountUSD?: number;
+        feeFiat?: number;
+        feeUSD?: number;
+        type?: string;
+        status?: string;
+        riskScore?: number;
+        riskLevel?: string;
+        kytStatus?: string;
+      }>;
+
+      return items.map((tx) => ({
         id: tx.id,
-        date: tx.createdAt || tx.date,
-        senderId: tx.senderUserId || tx.senderId,
-        receiverId: tx.receiverUserId || tx.receiverId,
+        date: tx.createdAt || tx.date || new Date().toISOString(),
+        senderId: tx.senderUserId || tx.senderId || '',
+        receiverId: tx.receiverUserId || tx.receiverId || '',
         senderRole: (tx.senderRole?.toLowerCase() || 'consumer') as UserRole,
         receiverRole: (tx.receiverRole?.toLowerCase() || 'merchant') as UserRole,
-        amountBTC: tx.amountCrypto || tx.amountBTC,
-        amountUSD: tx.amountFiat || tx.amountUSD,
+        amountBTC: tx.amountCrypto || tx.amountBTC || '0',
+        amountUSD: tx.amountFiat || tx.amountUSD || 0,
         feeUSD: tx.feeFiat || tx.feeUSD || 0,
         type: (tx.type?.toLowerCase() || 'merchant_payment') as Transaction['type'],
         status: (tx.status?.toLowerCase() || 'completed') as Transaction['status'],
         compliance: {
           riskScore: tx.riskScore || 0,
-          riskLevel: (tx.riskLevel || 'Low') as any,
-          kytStatus: (tx.kytStatus?.toLowerCase() || 'clean') as any
+          riskLevel: (tx.riskLevel || 'Low') as Transaction['compliance']['riskLevel'],
+          kytStatus: (tx.kytStatus?.toLowerCase() || 'clean') as Transaction['compliance']['kytStatus']
         }
       }));
     } catch (error) {
@@ -45,7 +67,7 @@ export const transactionService = {
   getByUser: async (userId: string): Promise<Transaction[]> => {
     try {
       const { data } = await apiClient.get(`/transactions?userId=${userId}`);
-      const items = Array.isArray(data) ? data : data.items || [];
+      const items = Array.isArray(data) ? data : data?.items || [];
       return items;
     } catch (error) {
       console.error(`Failed to fetch transactions for user ${userId}:`, error);

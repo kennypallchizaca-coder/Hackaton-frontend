@@ -31,8 +31,9 @@ export function Register() {
     try {
       await register(formData.fullName, formData.email, formData.password, formData.role);
       navigate('/app');
-    } catch (err: any) {
-      const msg = err.response?.data?.message;
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string | string[] } } };
+      const msg = error.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg || 'Error al crear la cuenta. Intenta de nuevo.');
     }
   };

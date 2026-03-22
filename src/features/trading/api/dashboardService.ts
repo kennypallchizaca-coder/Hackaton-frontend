@@ -6,7 +6,7 @@ export const dashboardService = {
     try {
       const { data } = await apiClient.get('/users/me/metrics'); 
       return data;
-    } catch (error) {
+    } catch {
       // Fallback for missing endpoint during transition
       return {
         totalBalance: 0,
@@ -21,7 +21,7 @@ export const dashboardService = {
     try {
       const { data } = await apiClient.get('/users/me/summary');
       return data;
-    } catch (error) {
+    } catch {
       return {
         date: new Date().toISOString(),
         totalVolume: 0,

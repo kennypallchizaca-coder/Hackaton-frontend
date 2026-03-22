@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Settings as SettingsIcon, User, Bell, Shield, Wallet, Check, Eye, EyeOff, Copy } from '../../../components/common/Icons';
 import { cn } from '../../../utils/cn';
 import { SEO } from '../../../components/common/SEO';
@@ -17,12 +17,15 @@ function FormField({ label, value: initialValue, type = 'text', mono = false, re
   label: string; value?: string; type?: string; mono?: boolean; readOnly?: boolean;
 }) {
   const [value, setValue] = useState(initialValue || '');
+  const [prevInitialValue, setPrevInitialValue] = useState(initialValue);
+
+  if (initialValue !== prevInitialValue) {
+    setValue(initialValue || '');
+    setPrevInitialValue(initialValue);
+  }
+
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setValue(initialValue || '');
-  }, [initialValue]);
   const handleCopy = () => {
     navigator.clipboard.writeText(value ?? '');
     setCopied(true);

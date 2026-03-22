@@ -2,25 +2,25 @@ import { useMemo } from 'react';
 
 export function OrderBook() {
   const sellOrders = useMemo(() => [
-    { price: '19,967.98', amount: '0.10016', total: '1,999.99' },
-    { price: '19,967.69', amount: '0.00100', total: '19.96' },
-    { price: '19,967.66', amount: '0.00066', total: '13.17' },
-    { price: '19,967.61', amount: '0.27769', total: '5,544.80' },
-    { price: '19,967.60', amount: '0.01961', total: '391.56' },
-    { price: '19,967.59', amount: '0.73579', total: '14,691.95' },
-    { price: '19,967.58', amount: '0.09455', total: '1,887.93' },
-    { price: '19,967.57', amount: '0.05009', total: '1,000.17' },
+    { price: '19,967.98', amount: '0.10016', total: '1,999.99', visualWidth: 45 },
+    { price: '19,967.69', amount: '0.00100', total: '19.96', visualWidth: 32 },
+    { price: '19,967.66', amount: '0.00066', total: '13.17', visualWidth: 28 },
+    { price: '19,967.61', amount: '0.27769', total: '5,544.80', visualWidth: 65 },
+    { price: '19,967.60', amount: '0.01961', total: '391.56', visualWidth: 41 },
+    { price: '19,967.59', amount: '0.73579', total: '14,691.95', visualWidth: 82 },
+    { price: '19,967.58', amount: '0.09455', total: '1,887.93', visualWidth: 38 },
+    { price: '19,967.57', amount: '0.05009', total: '1,000.17', visualWidth: 22 },
   ], []);
 
   const buyOrders = useMemo(() => [
-    { price: '19,965.66', amount: '0.00203', total: '40.53' },
-    { price: '19,965.54', amount: '0.03576', total: '713.96' },
-    { price: '19,965.49', amount: '0.04142', total: '826.97' },
-    { price: '19,965.46', amount: '0.00066', total: '13.17' },
-    { price: '19,965.43', amount: '0.03441', total: '687.01' },
-    { price: '19,965.38', amount: '0.12000', total: '2,395.84' },
-    { price: '19,965.27', amount: '0.00064', total: '12.77' },
-    { price: '19,965.24', amount: '0.04000', total: '798.60' },
+    { price: '19,965.66', amount: '0.00203', total: '40.53', visualWidth: 25 },
+    { price: '19,965.54', amount: '0.03576', total: '713.96', visualWidth: 42 },
+    { price: '19,965.49', amount: '0.04142', total: '826.97', visualWidth: 38 },
+    { price: '19,965.46', amount: '0.00066', total: '13.17', visualWidth: 15 },
+    { price: '19,965.43', amount: '0.03441', total: '687.01', visualWidth: 48 },
+    { price: '19,965.38', amount: '0.12000', total: '2,395.84', visualWidth: 72 },
+    { price: '19,965.27', amount: '0.00064', total: '12.77', visualWidth: 20 },
+    { price: '19,965.24', amount: '0.04000', total: '798.60', visualWidth: 35 },
   ], []);
 
   return (
@@ -36,7 +36,7 @@ export function OrderBook() {
       <div className="flex-1 flex flex-col justify-end overflow-hidden">
         {sellOrders.map((order, i) => (
           <div key={`sell-${i}`} className="grid grid-cols-3 px-4 py-[2px] text-[12px] relative group hover:bg-slate-800 cursor-pointer">
-            <div className="absolute right-0 top-0 bottom-0 bg-red-500/10 pointer-events-none" style={{ width: `${Math.random() * 60 + 20}%` }} />
+            <div className="absolute right-0 top-0 bottom-0 bg-red-500/10 pointer-events-none" style={{ width: `${order.visualWidth}%` }} />
             <span className="text-red-500 z-10">{order.price}</span>
             <span className="text-right text-slate-50 z-10">{order.amount}</span>
             <span className="text-right text-slate-50 z-10">{order.total}</span>
@@ -57,7 +57,7 @@ export function OrderBook() {
       <div className="flex-1 flex flex-col overflow-hidden pt-1">
         {buyOrders.map((order, i) => (
           <div key={`buy-${i}`} className="grid grid-cols-3 px-4 py-[2px] text-[12px] relative group hover:bg-slate-800 cursor-pointer">
-            <div className="absolute right-0 top-0 bottom-0 bg-emerald-500/10 pointer-events-none" style={{ width: `${Math.random() * 60 + 20}%` }} />
+            <div className="absolute right-0 top-0 bottom-0 bg-emerald-500/10 pointer-events-none" style={{ width: `${order.visualWidth}%` }} />
             <span className="text-emerald-500 z-10">{order.price}</span>
             <span className="text-right text-slate-50 z-10">{order.amount}</span>
             <span className="text-right text-slate-50 z-10">{order.total}</span>
