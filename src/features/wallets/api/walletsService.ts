@@ -23,7 +23,6 @@ const ensureArray = (data: unknown): Wallet[] => {
 
 export const walletsService = {
   getMyWallets: async (): Promise<Wallet[]> => {
-    // Check for mock balance in localStorage first (for testing)
     const mockWallets = localStorage.getItem('mock_wallets');
     if (mockWallets) {
       try {
@@ -31,7 +30,6 @@ export const walletsService = {
         const wallets = ensureArray(parsed);
         if (wallets.length > 0) return wallets;
       } catch {
-        // Corrupted localStorage, fall through
         localStorage.removeItem('mock_wallets');
       }
     }
@@ -49,10 +47,10 @@ export const walletsService = {
   addMockFunds: async (currency: 'USD' | 'BTC', amount: number): Promise<void> => {
     const current = await walletsService.getMyWallets();
     const existing = current.find(w => w.currency === currency);
-    
+
     let updated: Wallet[];
     if (existing) {
-      updated = current.map(w => w.currency === currency 
+      updated = current.map(w => w.currency === currency
         ? { ...w, balance: (parseFloat(w.balance) + amount).toString() }
         : w
       );
@@ -62,7 +60,7 @@ export const walletsService = {
         { id: `mock-${currency}-${Date.now()}`, userId: 'me', currency, balance: amount.toString() }
       ];
     }
-    
+
     localStorage.setItem('mock_wallets', JSON.stringify(updated));
     window.dispatchEvent(new Event('storage'));
   }

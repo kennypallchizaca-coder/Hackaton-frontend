@@ -7,7 +7,6 @@ export const dashboardService = {
       const { data } = await apiClient.get('/users/me/metrics'); 
       return data;
     } catch {
-      // Fallback for missing endpoint during transition
       return {
         totalBalance: 0,
         dailyVolume: 0,

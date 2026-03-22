@@ -14,14 +14,12 @@ export function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/pay/:id" element={<PaymentLinkPage />} />
         <Route path="/invoice/:id" element={<InvoicePage />} />
 
-        {/* Protected app routes */}
         <Route
           path="/app"
           element={
@@ -59,7 +57,6 @@ export function AppRoutes() {
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>
 
-        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

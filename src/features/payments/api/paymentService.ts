@@ -95,7 +95,6 @@ export const paymentService = {
       }
 
       console.warn('Backend payment creation failed, providing mock fallback for demo mode:', error);
-      // Mock invoice for seamless testing
       const mockInvoice: Invoice = {
         id: `mock-inv-${Math.floor(Math.random() * 1000000)}`,
         amount: amountSats / 1587, 
@@ -104,7 +103,7 @@ export const paymentService = {
         description: description,
         status: 'pending',
         lightningInvoice: `lnbc${amountSats}n1p...mock_lightning_invoice_for_testing_purposes`,
-        expiresAt: Date.now() + 7200000, // 2 hours for demo mode
+        expiresAt: Date.now() + 7200000,
         createdAt: Date.now(),
         store: merchantId,
       };
@@ -114,7 +113,6 @@ export const paymentService = {
   },
 
   checkPaymentStatus: async (invoiceId: string): Promise<PaymentStatus> => {
-    // Check local mocks first (for testing)
     const mockPaid = JSON.parse(localStorage.getItem('mock_paid_invoices') || '[]');
     if (mockPaid.includes(invoiceId)) {
       updateStoredInvoiceStatus(invoiceId, 'paid');
@@ -139,9 +137,7 @@ export const paymentService = {
     }
     updateStoredInvoiceStatus(invoiceId, 'paid');
     
-    // Trigger storage event to notify other tabs/listeners
     window.dispatchEvent(new Event('storage'));
-    // Trigger custom event for immediate UI update in the same tab
     window.dispatchEvent(new CustomEvent('payment-simulated', { detail: { invoiceId, status: 'paid' } }));
   },
 

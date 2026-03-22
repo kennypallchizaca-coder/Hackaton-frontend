@@ -61,7 +61,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         status: data.status,
         createdAt: data.createdAt,
         balance: {
-          fiat: 0, // Will be fetched via wallets service
+          fiat: 0,
           crypto: 0
         }
       };
@@ -113,10 +113,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
         isLoading: false
       });
     } catch (error) {
-      // HACKATHON FALLBACK: Guarantee demo accounts work even if backend is not seeded/running
       const isDemo = ['owner@demo.ec', 'agent@demo.com', 'consumer@demo.com'].includes(email);
       if (isDemo) {
-        console.warn('Backend login failed, using resilient frontend mock for demo account:', email);
         const role = email.includes('owner') ? 'merchant' : email.includes('agent') ? 'transaccionador' : 'consumer';
         const mappedUser: User = {
           id: `demo-id-${role}`,
@@ -147,7 +145,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         fullName, 
         email, 
         password, 
-        role: role.toLowerCase() // Ensure matches backend PlatformRole enum
+        role: role.toLowerCase()
       });
       
       const { data } = response;

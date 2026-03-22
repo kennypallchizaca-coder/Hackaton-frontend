@@ -9,7 +9,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request Interceptor: Attach Token
+
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken');
@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Unwrap helper — backend wraps success responses as { success: true, data: ... }
+
 function unwrapResponse(responseData: unknown): unknown {
   if (
     responseData !== null &&
@@ -35,7 +35,7 @@ function unwrapResponse(responseData: unknown): unknown {
   return responseData;
 }
 
-// Response Interceptor: Handle Refresh Token and Unwrap Data
+
 apiClient.interceptors.response.use(
   (response) => {
     response.data = unwrapResponse(response.data);
@@ -49,24 +49,18 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
 
       if (refreshToken) {
-        // HACKATHON FALLBACK: Do not try to refresh or log out the demo session!
         if (refreshToken === 'hackathon-demo-token') {
           if (originalRequest.method?.toUpperCase() === 'GET') {
-            console.warn('Backend returned 401 for demo session (GET), silencing interceptor to prevent logout loop');
-            return Promise.resolve({ data: { success: true, data: [] } }); // Mock successful empty response to prevent app crash
+            return Promise.resolve({ data: { success: true, data: [] } });
           }
-          // For POST/PUT/DELETE, we want the error to propagate so the caller can handle fallbacks
-          console.warn(`Backend returned 401 for demo session (${originalRequest.method}), allowing error to propagate for caller fallback`);
           return Promise.reject(error);
         }
 
         try {
-          // Use a fresh axios instance to avoid interceptor loops
           const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken,
           });
 
-          // Backend wraps in { success, data } — unwrap manually here
           const payload = unwrapResponse(refreshResponse.data) as {
             tokens: { accessToken: string; refreshToken: string };
           };
@@ -82,7 +76,6 @@ apiClient.interceptors.response.use(
 
           return apiClient(originalRequest);
         } catch (refreshError) {
-          // Refresh failed — log out user
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user_data');
